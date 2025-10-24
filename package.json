@@ -12,7 +12,7 @@
     "dev": "vite",
     "build": "rm -rf dist/ && tsc && vite build && npm run copy:example",
     "build:prod": "NODE_ENV=production npm run build",
-    "copy:example": "cp examples/index.html dist/ && sed -i.bak 's|../src/index.ts|../sql-workbench-embed.js|' dist/index.html && rm -f dist/index.html.bak",
+    "copy:example": "cp examples/index.html dist/ && sed -i.bak 's|../src/index.ts|../sql-workbench-embed.es.js|' dist/index.html && rm -f dist/index.html.bak",
     "preview": "vite preview",
     "preview:prod": "npm run build:prod && vite preview",
     "type-check": "tsc --noEmit"
