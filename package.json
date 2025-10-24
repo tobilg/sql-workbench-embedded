@@ -1,0 +1,49 @@
+{
+  "name": "sql-workbench-embed",
+  "version": "0.1.0",
+  "description": "Lightweight JavaScript library that transforms static SQL code blocks into interactive, browser-based SQL execution environments using DuckDB WASM",
+  "main": "dist/sql-workbench-embed.js",
+  "module": "dist/sql-workbench-embed.esm.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "build": "rm -rf dist/ && tsc && vite build && npm run copy:example",
+    "build:prod": "NODE_ENV=production npm run build",
+    "copy:example": "cp examples/index.html dist/ && sed -i.bak 's|../src/index.ts|../sql-workbench-embed.js|' dist/index.html && rm -f dist/index.html.bak",
+    "preview": "vite preview",
+    "preview:prod": "npm run build:prod && vite preview",
+    "type-check": "tsc --noEmit"
+  },
+  "keywords": [
+    "sql",
+    "duckdb",
+    "wasm",
+    "embed",
+    "interactive",
+    "sql-editor",
+    "documentation",
+    "tutorial"
+  ],
+  "author": "Tobi",
+  "license": "MIT",
+  "devDependencies": {
+    "@duckdb/duckdb-wasm": "^1.31.1-dev1.0",
+    "@types/node": "^22.18.12",
+    "terser": "^5.44.0",
+    "typescript": "^5.9.3",
+    "vite": "^7.1.12",
+    "vite-plugin-dts": "^4.5.4",
+    "vitest": "^4.0.3"
+  },
+  "peerDependencies": {
+    "@duckdb/duckdb-wasm": "^1.31.1-dev1.0"
+  },
+  "peerDependenciesMeta": {
+    "@duckdb/duckdb-wasm": {
+      "optional": true
+    }
+  }
+}

@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SQL Workbench Embed - React Example</title>
+  
+  <!-- React and ReactDOM from CDN -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  
+  <!-- Babel for JSX transformation -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+    }
+    
+    .app-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+    
+    .header {
+      text-align: center;
+      color: white;
+      margin-bottom: 3rem;
+    }
+    
+    .header h1 {
+      font-size: 3rem;
+      margin: 0 0 1rem 0;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    .header p {
+      font-size: 1.2rem;
+      opacity: 0.9;
+      margin: 0;
+    }
+    
+    .examples-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+      gap: 2rem;
+      margin-bottom: 3rem;
+    }
+    
+    .example-card {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    
+    .example-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+    }
+    
+    .example-card h3 {
+      color: #1f2937;
+      margin: 0 0 1rem 0;
+      font-size: 1.3rem;
+    }
+    
+    .example-card p {
+      color: #6b7280;
+      margin: 0 0 1.5rem 0;
+      line-height: 1.5;
+    }
+    
+    .sql-container {
+      margin-top: 1rem;
+    }
+    
+    .controls {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+    }
+    
+    .btn {
+      background: #3b82f6;
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .btn:hover {
+      background: #2563eb;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+    
+    .btn:active {
+      transform: translateY(0);
+    }
+    
+    .btn-secondary {
+      background: #6b7280;
+    }
+    
+    .btn-secondary:hover {
+      background: #4b5563;
+    }
+    
+    .info-panel {
+      background: rgba(255,255,255,0.95);
+      border-radius: 12px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      backdrop-filter: blur(10px);
+    }
+    
+    .info-panel h2 {
+      color: #1f2937;
+      margin: 0 0 1rem 0;
+    }
+    
+    .info-panel ul {
+      margin: 0;
+      padding-left: 1.5rem;
+    }
+    
+    .info-panel li {
+      color: #4b5563;
+      margin-bottom: 0.5rem;
+    }
+    
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+    
+    .stat-card {
+      background: white;
+      padding: 1.5rem;
+      border-radius: 8px;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .stat-number {
+      font-size: 2rem;
+      font-weight: bold;
+      color: #3b82f6;
+      margin: 0;
+    }
+    
+    .stat-label {
+      color: #6b7280;
+      margin: 0.5rem 0 0 0;
+      font-size: 0.9rem;
+    }
+    
+    @media (max-width: 768px) {
+      .app-container {
+        padding: 1rem;
+      }
+      
+      .header h1 {
+        font-size: 2rem;
+      }
+      
+      .examples-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .controls {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+    
+    // SQL Workbench Embed component
+    function SQLWorkbenchEmbed({ code, title, description, className = "" }) {
+      const containerRef = useRef(null);
+      const embedRef = useRef(null);
+      
+      useEffect(() => {
+        if (containerRef.current && window.SQLWorkbench) {
+          // Create a pre element with the SQL code
+          const preElement = document.createElement('pre');
+          preElement.className = 'sql-workbench-embed';
+          preElement.innerHTML = `<code>${code}</code>`;
+          containerRef.current.appendChild(preElement);
+          
+          // Initialize the embed
+          embedRef.current = new window.SQLWorkbench.Embed(preElement, {
+            editable: true,
+            theme: 'light'
+          });
+        }
+        
+        return () => {
+          if (embedRef.current) {
+            embedRef.current.destroy();
+          }
+        };
+      }, [code]);
+      
+      return (
+        <div className={`example-card ${className}`}>
+          <h3>{title}</h3>
+          <p>{description}</p>
+          <div className="sql-container" ref={containerRef}></div>
+        </div>
+      );
+    }
+    
+    // Main App component
+    function App() {
+      const [stats, setStats] = useState({
+        totalQueries: 0,
+        successfulQueries: 0,
+        lastExecution: null
+      });
+      
+      const [isLibraryLoaded, setIsLibraryLoaded] = useState(false);
+      
+      useEffect(() => {
+        // Check if SQL Workbench library is loaded
+        const checkLibrary = () => {
+          if (window.SQLWorkbench) {
+            setIsLibraryLoaded(true);
+          } else {
+            setTimeout(checkLibrary, 100);
+          }
+        };
+        checkLibrary();
+      }, []);
+      
+      const exampleQueries = [
+        {
+          title: "Basic Query",
+          description: "A simple SELECT statement to get started with SQL basics.",
+          code: `SELECT
+  'Hello' AS greeting,
+  'World' AS target,
+  42 AS answer,
+  3.14159 AS pi;`
+        },
+        {
+          title: "Data Generation",
+          description: "Generate sequences and perform mathematical operations.",
+          code: `SELECT
+  n AS number,
+  n * n AS square,
+  n * n * n AS cube,
+  CASE
+    WHEN n % 2 = 0 THEN 'Even'
+    ELSE 'Odd'
+  END AS parity
+FROM generate_series(1, 15) AS t(n);`
+        },
+        {
+          title: "Sales Analytics",
+          description: "Analyze sales data with aggregations and grouping.",
+          code: `WITH sales_data AS (
+  SELECT
+    unnest(['Electronics', 'Clothing', 'Electronics', 'Food', 'Clothing', 'Electronics', 'Food', 'Food']) AS category,
+    unnest([1200, 450, 890, 230, 620, 1500, 180, 340]) AS amount,
+    unnest(['2024-01-15', '2024-01-16', '2024-01-17', '2024-01-18', '2024-01-19', '2024-01-20', '2024-01-21', '2024-01-22']) AS sale_date
+)
+SELECT
+  category,
+  COUNT(*) AS transaction_count,
+  SUM(amount) AS total_sales,
+  AVG(amount) AS avg_sale,
+  MAX(amount) AS max_sale,
+  MIN(amount) AS min_sale
+FROM sales_data
+GROUP BY category
+ORDER BY total_sales DESC;`
+        },
+        {
+          title: "Employee Analytics",
+          description: "Use window functions for advanced employee data analysis.",
+          code: `WITH employee_data AS (
+  SELECT
+    unnest(['Alice', 'Bob', 'Carol', 'David', 'Eve', 'Frank', 'Grace']) AS name,
+    unnest(['Sales', 'Sales', 'Engineering', 'Engineering', 'Sales', 'Marketing', 'Engineering']) AS department,
+    unnest([75000, 82000, 95000, 88000, 79000, 68000, 92000]) AS salary,
+    unnest([3, 5, 8, 6, 4, 2, 7]) AS years_experience
+)
+SELECT
+  name,
+  department,
+  salary,
+  years_experience,
+  AVG(salary) OVER (PARTITION BY department) AS dept_avg_salary,
+  RANK() OVER (PARTITION BY department ORDER BY salary DESC) AS dept_rank,
+  RANK() OVER (ORDER BY salary DESC) AS company_rank,
+  LAG(salary) OVER (ORDER BY salary DESC) AS prev_salary,
+  salary - LAG(salary) OVER (ORDER BY salary DESC) AS salary_diff
+FROM employee_data
+ORDER BY salary DESC;`
+        },
+        {
+          title: "Date Operations",
+          description: "Work with dates, times, and temporal calculations.",
+          code: `SELECT
+  CURRENT_DATE AS today,
+  CURRENT_TIMESTAMP AS now,
+  CURRENT_DATE - INTERVAL '7 days' AS last_week,
+  CURRENT_DATE + INTERVAL '30 days' AS next_month,
+  EXTRACT(year FROM CURRENT_DATE) AS current_year,
+  EXTRACT(month FROM CURRENT_DATE) AS current_month,
+  EXTRACT(day FROM CURRENT_DATE) AS current_day,
+  EXTRACT(dow FROM CURRENT_DATE) AS day_of_week,
+  CASE EXTRACT(dow FROM CURRENT_DATE)
+    WHEN 0 THEN 'Sunday'
+    WHEN 1 THEN 'Monday'
+    WHEN 2 THEN 'Tuesday'
+    WHEN 3 THEN 'Wednesday'
+    WHEN 4 THEN 'Thursday'
+    WHEN 5 THEN 'Friday'
+    WHEN 6 THEN 'Saturday'
+  END AS day_name,
+  EXTRACT(hour FROM CURRENT_TIMESTAMP) AS current_hour,
+  EXTRACT(minute FROM CURRENT_TIMESTAMP) AS current_minute,
+  EXTRACT(second FROM CURRENT_TIMESTAMP) AS current_second;`
+        },
+        {
+          title: "Time Series Analysis",
+          description: "Generate and analyze time series data with trends.",
+          code: `WITH time_series AS (
+  SELECT
+    date_trunc('day', CURRENT_DATE - INTERVAL (30 - n) DAY) AS date,
+    n AS day_number,
+    100 + n * 2 + (n % 7) * 5 + random() * 10 AS value
+  FROM generate_series(0, 30) AS t(n)
+)
+SELECT
+  date,
+  day_number,
+  ROUND(value, 2) AS value,
+  ROUND(AVG(value) OVER (ORDER BY date ROWS BETWEEN 6 PRECEDING AND CURRENT ROW), 2) AS moving_avg_7d,
+  ROUND(LAG(value) OVER (ORDER BY date), 2) AS prev_value,
+  ROUND(value - LAG(value) OVER (ORDER BY date), 2) AS daily_change,
+  ROUND((value - LAG(value) OVER (ORDER BY date)) / LAG(value) OVER (ORDER BY date) * 100, 2) AS daily_change_pct
+FROM time_series
+ORDER BY date;`
+        }
+      ];
+      
+      if (!isLibraryLoaded) {
+        return (
+          <div className="app-container">
+            <div className="header">
+              <h1>SQL Workbench Embed</h1>
+              <p>Loading React components...</p>
+            </div>
+            <div className="info-panel">
+              <p>Loading SQL Workbench library...</p>
+            </div>
+          </div>
+        );
+      }
+      
+      return (
+        <div className="app-container">
+          <div className="header">
+            <h1>SQL Workbench Embed</h1>
+            <p>Interactive SQL execution in React with DuckDB WASM</p>
+          </div>
+          
+          <div className="info-panel">
+            <h2>🚀 React Integration Example</h2>
+            <p>This example demonstrates how to integrate SQL Workbench Embed with React components. Each SQL block below is a React component that automatically initializes the SQL Workbench when mounted.</p>
+            <ul>
+              <li><strong>Edit & Execute:</strong> Click on any SQL code to edit it, then press <code>Ctrl+Enter</code> to run</li>
+              <li><strong>React Components:</strong> Each example is a separate React component</li>
+              <li><strong>Automatic Cleanup:</strong> Components properly clean up when unmounted</li>
+              <li><strong>Responsive Design:</strong> Works on desktop and mobile devices</li>
+            </ul>
+          </div>
+          
+          <div className="examples-grid">
+            {exampleQueries.map((query, index) => (
+              <SQLWorkbenchEmbed
+                key={index}
+                title={query.title}
+                description={query.description}
+                code={query.code}
+              />
+            ))}
+          </div>
+          
+        </div>
+      );
+    }
+    
+    // Render the app using React 18's createRoot API
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+  
+  <!-- Load SQL Workbench Embed library -->
+  <script type="module" src="../src/index.ts"></script>
+</body>
+</html>
