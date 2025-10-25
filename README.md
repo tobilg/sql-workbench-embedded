@@ -371,6 +371,7 @@ SQLWorkbench.config({
 ## Keyboard Shortcuts
 
 - **Ctrl+Enter** (Mac: **Cmd+Enter**): Execute query
+- **Ctrl+Backspace** (Mac: **Cmd+Backspace**): Reset to original code
 - **Tab**: Navigate between buttons
 
 ## API Reference

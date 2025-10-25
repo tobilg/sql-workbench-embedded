@@ -85,6 +85,27 @@ export class Embed {
       this.container.setAttribute('data-theme', fallbackTheme);
     }
 
+    // Create editor wrapper
+    const editorWrapper = document.createElement('div');
+    editorWrapper.className = 'sql-workbench-editor-wrapper';
+
+    // Create editor header with buttons
+    const editorHeader = document.createElement('div');
+    editorHeader.className = 'sql-workbench-editor-header';
+
+    this.resetButton = document.createElement('button');
+    this.resetButton.className = 'sql-workbench-button sql-workbench-button-secondary sql-workbench-button-hidden';
+    this.resetButton.textContent = 'Reset';
+    this.resetButton.setAttribute('aria-label', 'Reset to original code');
+
+    this.runButton = document.createElement('button');
+    this.runButton.className = 'sql-workbench-button sql-workbench-button-primary';
+    this.runButton.textContent = 'Run';
+    this.runButton.setAttribute('aria-label', 'Execute SQL query');
+
+    editorHeader.appendChild(this.resetButton);
+    editorHeader.appendChild(this.runButton);
+
     // Create editor
     this.editorElement = document.createElement('div');
     this.editorElement.className = 'sql-workbench-editor';
@@ -97,34 +118,19 @@ export class Embed {
     // Set initial code
     this.editorElement.textContent = this.initialCode;
 
-    // Create controls
-    const controls = document.createElement('div');
-    controls.className = 'sql-workbench-controls';
+    // Assemble editor section
+    editorWrapper.appendChild(editorHeader);
+    editorWrapper.appendChild(this.editorElement);
 
-    this.runButton = document.createElement('button');
-    this.runButton.className = 'sql-workbench-button sql-workbench-button-primary';
-    this.runButton.textContent = 'Run';
-    this.runButton.setAttribute('aria-label', 'Execute SQL query');
-
-    this.resetButton = document.createElement('button');
-    this.resetButton.className = 'sql-workbench-button sql-workbench-button-secondary';
-    this.resetButton.textContent = 'Reset';
-    this.resetButton.setAttribute('aria-label', 'Reset to original code');
-
-    controls.appendChild(this.runButton);
-    controls.appendChild(this.resetButton);
-
-    // Create output area
+    // Create output area (initially hidden)
     this.outputElement = document.createElement('div');
-    this.outputElement.className = 'sql-workbench-output sql-workbench-output-empty';
-    this.outputElement.textContent = 'Run a query to see results';
+    this.outputElement.className = 'sql-workbench-output sql-workbench-output-hidden';
     this.outputElement.setAttribute('role', 'region');
     this.outputElement.setAttribute('aria-label', 'Query results');
     this.outputElement.setAttribute('aria-live', 'polite');
 
     // Assemble
-    this.container.appendChild(this.editorElement);
-    this.container.appendChild(controls);
+    this.container.appendChild(editorWrapper);
     this.container.appendChild(this.outputElement);
 
     // Replace original element
@@ -164,19 +170,30 @@ export class Embed {
 
     // Keyboard shortcuts
     this.editorElement?.addEventListener('keydown', (e) => {
+      // Run query: CMD/CTRL + Enter
       if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
         e.preventDefault();
         this.run();
+        return;
+      }
+      // Reset to original: CMD/CTRL + Backspace
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Backspace') {
+        if (this.state === 'loading') return; // Don't allow reset during query execution
+        e.preventDefault();
+        this.reset();
+        return;
       }
       // Handle Enter key to insert newline character instead of browser default
-      else if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
+      if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
         e.preventDefault();
         this.insertText('\n');
+        return;
       }
       // Handle Tab key to insert spaces
-      else if (e.key === 'Tab') {
+      if (e.key === 'Tab') {
         e.preventDefault();
         this.insertText('  '); // Insert 2 spaces for tab
+        return;
       }
     });
 
@@ -365,6 +382,7 @@ export class Embed {
 
       this.setState('success');
       this.showResult(result);
+      this.showResetButton();
     } catch (error) {
       // Ensure minimum loading duration even on error
       const elapsed = performance.now() - startTime;
@@ -374,6 +392,7 @@ export class Embed {
 
       this.setState('error');
       this.showError(error instanceof Error ? error.message : String(error));
+      this.showResetButton();
     }
   }
 
@@ -384,8 +403,12 @@ export class Embed {
     this.setCode(this.initialCode);
     this.setState('idle');
     if (this.outputElement) {
-      this.outputElement.className = 'sql-workbench-output sql-workbench-output-empty';
-      this.outputElement.textContent = 'Run a query to see results';
+      this.outputElement.className = 'sql-workbench-output sql-workbench-output-hidden';
+      this.outputElement.textContent = '';
+    }
+    // Hide the Reset button again
+    if (this.resetButton) {
+      this.resetButton.classList.add('sql-workbench-button-hidden');
     }
   }
 
@@ -399,6 +422,15 @@ export class Embed {
     if (this.runButton && this.resetButton) {
       this.runButton.disabled = state === 'loading';
       this.resetButton.disabled = state === 'loading';
+    }
+  }
+
+  /**
+   * Show the Reset button (called after first query execution)
+   */
+  private showResetButton(): void {
+    if (this.resetButton) {
+      this.resetButton.classList.remove('sql-workbench-button-hidden');
     }
   }
 

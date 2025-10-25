@@ -35,7 +35,7 @@ SQLWorkbenchEmbed
 │   └── Cursor Position Manager
 ├── Control Buttons
 │   ├── Run Button (Ctrl/Cmd+Enter)
-│   └── Reset Button
+│   └── Reset Button (Ctrl/Cmd+Backspace)
 ├── Output Area
 │   ├── Table Renderer
 │   ├── Error Display

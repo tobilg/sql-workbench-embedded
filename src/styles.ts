@@ -33,8 +33,8 @@ export const LIGHT_THEME_CONFIG: ThemeConfig = {
   fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif',
   editorFontFamily: '"Monaco", "Menlo", "Ubuntu Mono", "Consolas", monospace',
   fontSize: '14px',
-  editorFontSize: '14px',
-  buttonFontSize: '14px',
+  editorFontSize: '13px',
+  buttonFontSize: '13px',
   metadataFontSize: '12px',
 };
 
@@ -71,8 +71,8 @@ export const DARK_THEME_CONFIG: ThemeConfig = {
   fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif',
   editorFontFamily: '"Monaco", "Menlo", "Ubuntu Mono", "Consolas", monospace',
   fontSize: '14px',
-  editorFontSize: '14px',
-  buttonFontSize: '14px',
+  editorFontSize: '13px',
+  buttonFontSize: '13px',
   metadataFontSize: '12px',
 };
 
@@ -210,9 +210,23 @@ export const CSS_STYLES = `
   color: var(--sw-text-color);
 }
 
+.sql-workbench-editor-wrapper {
+  position: relative;
+  background: var(--sw-editor-bg);
+}
+
+.sql-workbench-editor-header {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  display: flex;
+  gap: 0.5rem;
+  z-index: 10;
+}
+
 .sql-workbench-editor {
   font-family: var(--sw-editor-font-family, 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace);
-  font-size: var(--sw-editor-font-size, 14px);
+  font-size: var(--sw-editor-font-size, 13px);
   line-height: 1.5;
   padding: 1rem;
   background: var(--sw-editor-bg);
@@ -230,17 +244,9 @@ export const CSS_STYLES = `
   background: var(--sw-editor-focus-bg);
 }
 
-.sql-workbench-controls {
-  display: flex;
-  gap: 0.5rem;
-  padding: 0.75rem;
-  background: var(--sw-controls-bg);
-  border-top: 1px solid var(--sw-border-color);
-}
-
 .sql-workbench-button {
-  padding: 0.5rem 1rem;
-  font-size: var(--sw-button-font-size, 14px);
+  padding: 0.375rem 0.75rem;
+  font-size: var(--sw-button-font-size, 13px);
   font-weight: 500;
   border: none;
   border-radius: 4px;
@@ -252,6 +258,10 @@ export const CSS_STYLES = `
 .sql-workbench-button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.sql-workbench-button-hidden {
+  display: none;
 }
 
 .sql-workbench-button-primary {
@@ -276,6 +286,10 @@ export const CSS_STYLES = `
   padding: 1rem;
   min-height: 20px;
   border-top: 1px solid var(--sw-border-color);
+}
+
+.sql-workbench-output-hidden {
+  display: none;
 }
 
 .sql-workbench-output-empty {
@@ -362,12 +376,14 @@ export const CSS_STYLES = `
 
 /* Responsive adjustments for mobile */
 @media (max-width: 480px) {
-  .sql-workbench-controls {
+  .sql-workbench-editor-header {
     flex-direction: column;
+    width: auto;
   }
 
   .sql-workbench-button {
-    width: 100%;
+    font-size: 12px;
+    padding: 0.4rem 0.75rem;
   }
 
   .sql-workbench-metadata {
