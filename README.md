@@ -7,7 +7,7 @@ A lightweight JavaScript library that transforms static SQL code blocks into int
 ## Features
 
 - **Zero Backend Required**: All SQL execution happens in the browser
-- **Lightweight**: 7.77KB gzipped bundle (24.98KB minified)
+- **Lightweight**: 9.29 kB gzipped bundle (28.66 kB minified)
 - **Easy Integration**: Just add a CSS class to your code blocks
 - **Interactive Editing**: Edit SQL queries with real-time syntax highlighting
 - **Framework Agnostic**: Works with vanilla JS, React, Vue, and more
@@ -535,21 +535,21 @@ export default {
 
 The library is optimized for production with minimal bundle size:
 
-- **UMD Bundle**: 24.98KB minified, 7.77KB gzipped
-- **ES Module**: 25.67KB minified, 7.82KB gzipped
+- **UMD Bundle**: 28.66 kB minified, 9.29 kB gzipped
+- **ES Module**: 29.35 kB minified, 9.33 kB gzipped
 - **DuckDB WASM**: Loaded separately from CDN (~5MB on first use)
 
 ### Size Breakdown
 
-- **SQL Workbench Embed**: ~16KB (UI, syntax highlighting, path resolution, theming)
-- **DuckDB Client Library**: ~5KB (minimal DuckDB bindings)
-- **Build Overhead**: ~2KB (UMD wrapper, utilities)
+- **SQL Workbench Embed**: ~20 kB (UI, syntax highlighting, path resolution, theming)
+- **DuckDB Client Library**: ~6 kB (minimal DuckDB bindings)
+- **Build Overhead**: ~2 kB (UMD wrapper, utilities)
 
 ### Performance Impact
 
-- **Initial Load**: 7.77KB gzipped (extremely lightweight)
+- **Initial Load**: 9.29 kB gzipped (extremely lightweight)
 - **First Query**: Additional ~5MB for DuckDB WASM binary (cached thereafter)
-- **Subsequent Loads**: Only 7.77KB (DuckDB cached)
+- **Subsequent Loads**: Only 9.29 kB (DuckDB cached)
 
 The production build maintains a compact size while providing full functionality including typography customization.
 
