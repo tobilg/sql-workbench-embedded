@@ -5,7 +5,7 @@ A lightweight JavaScript library that transforms static SQL code blocks into int
 ## Features
 
 - **Zero Backend Required**: All SQL execution happens in the browser
-- **Lightweight**: 6.6KB gzipped bundle (20.7KB minified)
+- **Lightweight**: 7.2KB gzipped bundle (23KB minified)
 - **Easy Integration**: Just add a CSS class to your code blocks
 - **Interactive Editing**: Edit SQL queries with real-time syntax highlighting
 - **Framework Agnostic**: Works with vanilla JS, React, Vue, and more
@@ -420,8 +420,8 @@ export default {
 
 The library is optimized for production with minimal bundle size:
 
-- **UMD Bundle**: 20.7KB minified, 6.6KB gzipped
-- **ES Module**: 31.0KB minified, 8.2KB gzipped
+- **UMD Bundle**: 23KB minified, 7.2KB gzipped
+- **ES Module**: 36KB minified, 9.1KB gzipped
 - **DuckDB WASM**: Loaded separately from CDN (~5MB on first use)
 
 ### Size Breakdown
@@ -432,9 +432,9 @@ The library is optimized for production with minimal bundle size:
 
 ### Performance Impact
 
-- **Initial Load**: 6.6KB gzipped (extremely lightweight)
+- **Initial Load**: 7.2KB gzipped (extremely lightweight)
 - **First Query**: Additional 5MB for DuckDB WASM binary (cached thereafter)
-- **Subsequent Loads**: Only 6.6KB (DuckDB cached)
+- **Subsequent Loads**: Only 7.2KB (DuckDB cached)
 
 The production build achieves the original ~20KB target while maintaining full functionality.
 
@@ -469,9 +469,3 @@ examples/
 ## License
 
 MIT License - see [LICENSE](LICENSE) file for details.
-
-## Credits
-
-- Built with [DuckDB WASM](https://github.com/duckdb/duckdb-wasm)
-- Embedded [sql-highlight](https://github.com/scriptcoded/sql-highlight)
-- Examples use React 18 and Vue 3 from CDN for easy testing
