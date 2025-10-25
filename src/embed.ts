@@ -542,8 +542,8 @@ export class Embed {
     tableHTML += `
       <div class="sql-workbench-metadata">
         <span>${result.rowCount} row${result.rowCount === 1 ? '' : 's'}</span>
-        <span>Execution time: ${result.executionTime.toFixed(2)}ms</span>
         <span>${result.columns.length} column${result.columns.length === 1 ? '' : 's'}</span>
+        <span>Execution time: ${result.executionTime.toFixed(2)}ms</span>
       </div>
     `;
 
