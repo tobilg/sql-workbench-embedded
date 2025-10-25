@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SQL Workbench Embed - React Example</title>
+  <title>SQL Workbench Embedded - React Example</title>
   
   <!-- React and ReactDOM from CDN -->
   <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
@@ -171,7 +171,7 @@
   <script type="text/babel">
     const { useState, useEffect, useRef } = React;
     
-    // SQL Workbench Embed component
+    // SQL Workbench Embedded component
     function SQLWorkbenchEmbed({ code, title, description, className = "" }) {
       const containerRef = useRef(null);
       const embedRef = useRef(null);
@@ -347,11 +347,11 @@ ORDER BY date;`
         return (
           <div className="app-container">
             <div className="header">
-              <h1>SQL Workbench Embed</h1>
+              <h1>SQL Workbench Embedded</h1>
               <p>Loading React components...</p>
             </div>
             <div className="info-panel">
-              <p>Loading SQL Workbench library...</p>
+              <p>Loading SQL Workbench Embedded library...</p>
             </div>
           </div>
         );
@@ -360,13 +360,13 @@ ORDER BY date;`
       return (
         <div className="app-container">
           <div className="header">
-            <h1>SQL Workbench Embed</h1>
+            <h1>SQL Workbench Embedded</h1>
             <p>Interactive SQL execution in React with DuckDB WASM</p>
           </div>
           
           <div className="info-panel">
             <h2>🚀 React Integration Example</h2>
-            <p>This example demonstrates how to integrate SQL Workbench Embed with React components. Each SQL block below is a React component that automatically initializes the SQL Workbench when mounted.</p>
+            <p>This example demonstrates how to integrate SQL Workbench Embedded with React components. Each SQL block below is a React component that automatically initializes the SQL Workbench when mounted.</p>
             <ul>
               <li><strong>Edit & Execute:</strong> Click on any SQL code to edit it, then press <code>Ctrl+Enter</code> to run</li>
               <li><strong>React Components:</strong> Each example is a separate React component</li>
@@ -395,7 +395,7 @@ ORDER BY date;`
     root.render(<App />);
   </script>
   
-  <!-- Load SQL Workbench Embed library -->
+  <!-- Load SQL Workbench Embedded library -->
   <script type="module" src="../src/index.ts"></script>
 </body>
 </html>
