@@ -11,8 +11,8 @@ The SQL Workbench Embed is a lightweight JavaScript library that transforms stat
 ### FR1: Embed Initialization
 
 #### FR1.1: Automatic Discovery
-- **Requirement**: System SHALL automatically scan the DOM for SQL code blocks marked with class `sql-workbench-embed`
-- **Default Selector**: `"pre.sql-workbench-embed, .sql-workbench-embed pre"`
+- **Requirement**: System SHALL automatically scan the DOM for SQL code blocks marked with class `sql-workbench-embedded`
+- **Default Selector**: `"pre.sql-workbench-embedded, .sql-workbench-embedded pre"`
 - **Trigger**: DOMContentLoaded event or manual `init()` call
 - **Configurable**: Users can override selector via configuration
 

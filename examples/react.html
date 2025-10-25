@@ -208,7 +208,7 @@
         if (containerRef.current && window.SQLWorkbench) {
           // Create a pre element with the SQL code
           const preElement = document.createElement('pre');
-          preElement.className = 'sql-workbench-embed';
+          preElement.className = 'sql-workbench-embedded';
           preElement.innerHTML = `<code>${code}</code>`;
           containerRef.current.appendChild(preElement);
           

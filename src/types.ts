@@ -128,7 +128,7 @@ export type EmbedState = 'idle' | 'loading' | 'success' | 'error';
  * Default configuration values
  */
 export const DEFAULT_CONFIG: Required<SQLWorkbenchConfig> = {
-  selector: 'pre.sql-workbench-embed, .sql-workbench-embed pre',
+  selector: 'pre.sql-workbench-embedded, .sql-workbench-embedded pre',
   baseUrl: 'https://data.sql-workbench.com',
   theme: 'auto',
   customThemes: {},

@@ -358,7 +358,7 @@ export const CSS_STYLES = `
 export function injectStyles(): void {
   if (typeof document === 'undefined') return;
 
-  const styleId = 'sql-workbench-embed-styles';
+  const styleId = 'sql-workbench-embedded-styles';
   if (document.getElementById(styleId)) return;
 
   const style = document.createElement('style');

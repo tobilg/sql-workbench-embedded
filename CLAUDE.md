@@ -97,7 +97,7 @@ Required features: WebAssembly, Web Workers, ES2018+, contenteditable
 ```javascript
 // Global configuration
 window.SQLWorkbench.config = {
-  selector: "pre.sql-workbench-embed, .sql-workbench-embed pre",
+  selector: "pre.sql-workbench-embedded, .sql-workbench-embedded pre",
   baseUrl: "https://data.sql-workbench.com",
   theme: "light" | "dark",
   autoInit: true,
@@ -158,4 +158,4 @@ When implementing, consider these enhancement opportunities over basic SQLWorkbe
 
 ## Requirements Reference
 
-Full functional and non-functional requirements are documented in [requirements/sql-workbench-embed-requirements.md](requirements/sql-workbench-embed-requirements.md).
+Full functional and non-functional requirements are documented in [requirements/sql-workbench-embedded-requirements.md](requirements/sql-workbench-embedded-requirements.md).

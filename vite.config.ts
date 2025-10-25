@@ -11,11 +11,12 @@ export default defineConfig({
   build: {
     lib: {
       entry: resolve(__dirname, 'src/index.ts'),
-      name: 'SQLWorkbenchEmbed',
+      name: 'SQLWorkbenchEmbedded',
       formats: ['umd', 'es'],
       fileName: (format) => {
-        if (format === 'umd') return 'sql-workbench-embed.js';
-        return `sql-workbench-embed.${format}.js`;
+        if (format === 'umd') return 'sql-workbench-embedded.js';
+        if (format === 'es') return 'sql-workbench-embedded.esm.js';
+        return `sql-workbench-embedded.${format}.js`;
       },
     },
     minify: 'terser',

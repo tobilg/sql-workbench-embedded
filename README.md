@@ -1,4 +1,4 @@
-# SQL Workbench Embed
+# SQL Workbench Embedded
 
 A lightweight JavaScript library that transforms static SQL code blocks into interactive, browser-based SQL execution environments using DuckDB WASM.
 
@@ -16,7 +16,7 @@ A lightweight JavaScript library that transforms static SQL code blocks into int
 
 ## Quick Start
 
-### Via CDN (Coming Soon)
+### Via CDN
 
 ```html
 <!DOCTYPE html>
@@ -25,11 +25,11 @@ A lightweight JavaScript library that transforms static SQL code blocks into int
   <title>SQL Workbench Example</title>
 </head>
 <body>
-  <pre class="sql-workbench-embed">
+  <pre class="sql-workbench-embedded">
     <code>SELECT 'Hello, World!' AS greeting;</code>
   </pre>
 
-  <script src="https://unpkg.com/sql-workbench-embed@latest"></script>
+  <script src="https://unpkg.com/sql-workbench-embedded@latest"></script>
 </body>
 </html>
 ```
@@ -60,17 +60,17 @@ npm run preview:prod
 
 ### Automatic Initialization
 
-By default, the library automatically scans for elements with the class `sql-workbench-embed` and transforms them:
+By default, the library automatically scans for elements with the class `sql-workbench-embedded` and transforms them:
 
 ```html
-<pre class="sql-workbench-embed">
+<pre class="sql-workbench-embedded">
   <code>
     SELECT * FROM generate_series(1, 10);
   </code>
 </pre>
 
 <!-- You can also set the theme directly on the element -->
-<pre class="sql-workbench-embed" data-theme="dark">
+<pre class="sql-workbench-embedded" data-theme="dark">
   <code>
     SELECT * FROM users WHERE active = true;
   </code>
@@ -80,7 +80,7 @@ By default, the library automatically scans for elements with the class `sql-wor
 ### Manual Initialization
 
 ```javascript
-import { SQLWorkbench } from 'sql-workbench-embed';
+import { SQLWorkbench } from 'sql-workbench-embedded';
 
 // Configure globally
 SQLWorkbench.config({
@@ -102,7 +102,7 @@ const embed = new SQLWorkbench.Embed(element, {
 ### Browser Usage (UMD)
 
 ```html
-<script src="https://unpkg.com/sql-workbench-embed@latest"></script>
+<script src="https://unpkg.com/sql-workbench-embedded@latest"></script>
 <script>
   // Configure globally
   SQLWorkbench.config({
@@ -128,7 +128,7 @@ const embed = new SQLWorkbench.Embed(element, {
 
 ```javascript
 SQLWorkbench.config({
-  selector: 'pre.sql-workbench-embed, .sql-workbench-embed pre',  // CSS selector for auto-discovery
+  selector: 'pre.sql-workbench-embedded, .sql-workbench-embedded pre',  // CSS selector for auto-discovery
   baseUrl: 'https://data.sql-workbench.com',  // Base URL for file paths
   theme: 'auto',  // 'light', 'dark', or 'auto'
   autoInit: true,  // Auto-initialize on DOMContentLoaded
@@ -318,7 +318,7 @@ embed.getContainer();  // Get container element
 
 ```jsx
 import { useRef, useEffect } from 'react';
-import { SQLWorkbench } from 'sql-workbench-embed';
+import { SQLWorkbench } from 'sql-workbench-embedded';
 
 function SQLEmbed({ code, options }) {
   const containerRef = useRef(null);
@@ -328,7 +328,7 @@ function SQLEmbed({ code, options }) {
     if (containerRef.current && window.SQLWorkbench) {
       // Create a pre element with the SQL code
       const preElement = document.createElement('pre');
-      preElement.className = 'sql-workbench-embed';
+      preElement.className = 'sql-workbench-embedded';
       preElement.innerHTML = `<code>${code}</code>`;
       containerRef.current.appendChild(preElement);
 
@@ -368,7 +368,7 @@ export default {
       if (containerRef.value && window.SQLWorkbench) {
         // Create a pre element with the SQL code
         const preElement = document.createElement('pre');
-        preElement.className = 'sql-workbench-embed';
+        preElement.className = 'sql-workbench-embedded';
         preElement.innerHTML = `<code>${props.code}</code>`;
         containerRef.value.appendChild(preElement);
 
@@ -402,7 +402,7 @@ export default {
   mounted() {
     if (this.$refs.container && window.SQLWorkbench) {
       const element = document.createElement('pre');
-      element.className = 'sql-workbench-embed';
+      element.className = 'sql-workbench-embedded';
       element.innerHTML = `<code>${this.code}</code>`;
       this.$refs.container.appendChild(element);
 

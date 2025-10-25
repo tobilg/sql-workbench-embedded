@@ -88,7 +88,7 @@
     <h2>Example 1: Basic Query</h2>
     <p>A simple SELECT query to get started. Try modifying the numbers!</p>
 
-    <pre class="sql-workbench-embed" data-theme="dark"><code>SELECT
+    <pre class="sql-workbench-embedded" data-theme="dark"><code>SELECT
   'Hello' AS greeting,
   'World' AS target,
   42 AS answer,
@@ -99,7 +99,7 @@
     <h2>Example 2: Data Generation</h2>
     <p>Generate a sequence of numbers and perform calculations:</p>
 
-    <pre class="sql-workbench-embed"><code>SELECT
+    <pre class="sql-workbench-embedded"><code>SELECT
   n AS number,
   n * n AS square,
   n * n * n AS cube,
@@ -114,7 +114,7 @@ FROM generate_series(1, 10) AS t(n);</code></pre>
     <h2>Example 3: Aggregations</h2>
     <p>Group data and perform aggregations:</p>
 
-    <pre class="sql-workbench-embed"><code>WITH sales_data AS (
+    <pre class="sql-workbench-embedded"><code>WITH sales_data AS (
   SELECT
     unnest(['Electronics', 'Clothing', 'Electronics', 'Food', 'Clothing', 'Electronics', 'Food', 'Food']) AS category,
     unnest([1200, 450, 890, 230, 620, 1500, 180, 340]) AS amount
@@ -134,7 +134,7 @@ ORDER BY total_sales DESC;</code></pre>
     <h2>Example 4: Date Operations</h2>
     <p>Work with dates and time:</p>
 
-    <pre class="sql-workbench-embed"><code>SELECT
+    <pre class="sql-workbench-embedded"><code>SELECT
   CURRENT_DATE AS today,
   CURRENT_DATE - INTERVAL '7 days' AS last_week,
   CURRENT_DATE + INTERVAL '30 days' AS next_month,
@@ -147,7 +147,7 @@ ORDER BY total_sales DESC;</code></pre>
     <h2>Example 5: Window Functions</h2>
     <p>Use window functions for advanced analytics:</p>
 
-    <pre class="sql-workbench-embed"><code>WITH employee_data AS (
+    <pre class="sql-workbench-embedded"><code>WITH employee_data AS (
   SELECT
     unnest(['Alice', 'Bob', 'Carol', 'David', 'Eve']) AS name,
     unnest(['Sales', 'Sales', 'Engineering', 'Engineering', 'Sales']) AS department,
@@ -169,15 +169,15 @@ ORDER BY department, salary DESC;</code></pre>
     <p>Demonstrating custom theme usage with different color schemes.</p>
 
     <h3>Ocean Theme (extends dark)</h3>
-    <pre class="sql-workbench-embed" data-theme="ocean"><code>SELECT 'Ocean theme' AS theme_name, 'Extends dark theme' AS description;</code></pre>
+    <pre class="sql-workbench-embedded" data-theme="ocean"><code>SELECT 'Ocean theme' AS theme_name, 'Extends dark theme' AS description;</code></pre>
 
     <h3>Sunset Theme (standalone)</h3>
-    <pre class="sql-workbench-embed" data-theme="sunset"><code>SELECT 'Sunset theme' AS theme_name, 'Standalone theme' AS description;</code></pre>
+    <pre class="sql-workbench-embedded" data-theme="sunset"><code>SELECT 'Sunset theme' AS theme_name, 'Standalone theme' AS description;</code></pre>
   </div>
 
   <!--
     The SQL Workbench Embed library will automatically find all elements with
-    class "sql-workbench-embed" and transform them into interactive embeds
+    class "sql-workbench-embedded" and transform them into interactive embeds
   -->
   <script type="module">
     import { SQLWorkbench } from '../src/index.ts';
