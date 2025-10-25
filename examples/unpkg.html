@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SQL Workbench Embedded - unpkg CDN Example</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+      background: #f5f5f5;
+    }
+
+    h1 {
+      color: #1f2937;
+      margin-bottom: 0.5rem;
+    }
+
+    .subtitle {
+      color: #6b7280;
+      margin-bottom: 2rem;
+    }
+
+    .cdn-badge {
+      display: inline-block;
+      background: #10b981;
+      color: white;
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      margin-left: 0.5rem;
+    }
+
+    .example-section {
+      margin-bottom: 3rem;
+    }
+
+    .example-section h2 {
+      color: #1f2937;
+      margin-bottom: 1rem;
+    }
+
+    .example-section p {
+      color: #4b5563;
+      margin-bottom: 1rem;
+    }
+
+    .info-box {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .info-box h3 {
+      margin-top: 0;
+      color: #1f2937;
+    }
+
+    .info-box ul {
+      margin: 0;
+      padding-left: 1.5rem;
+    }
+
+    .info-box li {
+      color: #4b5563;
+      margin-bottom: 0.5rem;
+    }
+
+    code {
+      background: #f3f4f6;
+      padding: 0.2rem 0.4rem;
+      border-radius: 3px;
+      font-family: 'Monaco', 'Menlo', monospace;
+      font-size: 0.9em;
+    }
+  </style>
+</head>
+<body>
+  <h1>SQL Workbench Embedded <span class="cdn-badge">unpkg CDN</span></h1>
+  <p class="subtitle">Interactive SQL execution in your browser using DuckDB WASM - loaded from unpkg CDN</p>
+
+  <div class="info-box">
+    <h3>How to use</h3>
+    <ul>
+      <li>Edit the SQL code directly in the editor</li>
+      <li>Click <strong>Run</strong> or press <code>Ctrl+Enter</code> (Mac: <code>Cmd+Enter</code>) to execute</li>
+      <li>Click <strong>Reset</strong> or press <code>Ctrl+Backspace</code> (Mac: <code>Cmd+Backspace</code>) to restore the original code</li>
+      <li>Click the <strong>open icon button</strong> or press <code>Ctrl+Shift+Enter</code> (Mac: <code>Cmd+Shift+Enter</code>) to open your query in the full SQL Workbench</li>
+      <li>All queries run locally in your browser - no data is sent to any server</li>
+      <li><strong>Note:</strong> DuckDB WASM loads on first query execution (may take a few seconds initially)</li>
+      <li><strong>CDN:</strong> This example loads the library from <code>unpkg.com</code> as a UMD module (non-ESM)</li>
+    </ul>
+  </div>
+
+  <div class="example-section">
+    <h2>Example 1: Basic Query</h2>
+    <p>A simple SELECT query to get started. Try modifying the numbers!</p>
+
+    <pre class="sql-workbench-embedded" data-theme="dark"><code>SELECT
+  'Hello' AS greeting,
+  'World' AS target,
+  42 AS answer,
+  3.14159 AS pi;</code></pre>
+  </div>
+
+  <div class="example-section">
+    <h2>Example 2: Data Generation</h2>
+    <p>Generate a sequence of numbers and perform calculations:</p>
+
+    <pre class="sql-workbench-embedded"><code>SELECT
+  n AS number,
+  n * n AS square,
+  n * n * n AS cube,
+  CASE
+    WHEN n % 2 = 0 THEN 'Even'
+    ELSE 'Odd'
+  END AS parity
+FROM generate_series(1, 10) AS t(n);</code></pre>
+  </div>
+
+  <div class="example-section">
+    <h2>Example 3: Aggregations</h2>
+    <p>Group data and perform aggregations:</p>
+
+    <pre class="sql-workbench-embedded"><code>WITH sales_data AS (
+  SELECT
+    unnest(['Electronics', 'Clothing', 'Electronics', 'Food', 'Clothing', 'Electronics', 'Food', 'Food']) AS category,
+    unnest([1200, 450, 890, 230, 620, 1500, 180, 340]) AS amount
+)
+SELECT
+  category,
+  COUNT(*) AS transaction_count,
+  SUM(amount) AS total_sales,
+  AVG(amount) AS avg_sale,
+  MAX(amount) AS max_sale
+FROM sales_data
+GROUP BY category
+ORDER BY total_sales DESC;</code></pre>
+  </div>
+
+  <div class="example-section">
+    <h2>Example 4: Date Operations</h2>
+    <p>Work with dates and time:</p>
+
+    <pre class="sql-workbench-embedded"><code>SELECT
+  CURRENT_DATE AS today,
+  CURRENT_DATE - INTERVAL '7 days' AS last_week,
+  CURRENT_DATE + INTERVAL '30 days' AS next_month,
+  EXTRACT(year FROM CURRENT_DATE) AS current_year,
+  EXTRACT(month FROM CURRENT_DATE) AS current_month,
+  EXTRACT(day FROM CURRENT_DATE) AS current_day;</code></pre>
+  </div>
+
+  <div class="example-section">
+    <h2>Example 5: Window Functions</h2>
+    <p>Use window functions for advanced analytics:</p>
+
+    <pre class="sql-workbench-embedded"><code>WITH employee_data AS (
+  SELECT
+    unnest(['Alice', 'Bob', 'Carol', 'David', 'Eve']) AS name,
+    unnest(['Sales', 'Sales', 'Engineering', 'Engineering', 'Sales']) AS department,
+    unnest([75000, 82000, 95000, 88000, 79000]) AS salary
+)
+SELECT
+  name,
+  department,
+  salary,
+  AVG(salary) OVER (PARTITION BY department) AS dept_avg_salary,
+  RANK() OVER (PARTITION BY department ORDER BY salary DESC) AS dept_rank,
+  RANK() OVER (ORDER BY salary DESC) AS company_rank
+FROM employee_data
+ORDER BY department, salary DESC;</code></pre>
+  </div>
+
+  <div class="example-section">
+    <h2>Example 6: Custom Themes</h2>
+    <p>Demonstrating custom theme usage with different color schemes.</p>
+
+    <h3>Ocean Theme (extends dark)</h3>
+    <pre class="sql-workbench-embedded" data-theme="ocean"><code>SELECT 'Ocean theme' AS theme_name, 'Extends dark theme' AS description;</code></pre>
+
+    <h3>Sunset Theme (standalone)</h3>
+    <pre class="sql-workbench-embedded" data-theme="sunset"><code>SELECT 'Sunset theme' AS theme_name, 'Standalone theme' AS description;</code></pre>
+  </div>
+
+  <!--
+    The SQL Workbench Embed library will automatically find all elements with
+    class "sql-workbench-embedded" and transform them into interactive embeds
+
+    This example loads the library from unpkg.com as a UMD module (non-ESM)
+    The library is available globally as window.SQLWorkbench
+    unpkg automatically resolves to the file specified in the "unpkg" field of package.json
+  -->
+  <script src="https://unpkg.com/sql-workbench-embedded@latest"></script>
+  <script>
+    // Configure custom themes and disable autoInit
+    window.SQLWorkbench.config({
+      autoInit: false,
+      customThemes: {
+        ocean: {
+          extends: 'dark',
+          config: {
+            primaryBg: '#0ea5e9',
+            primaryHover: '#0284c7',
+            editorBg: '#1e3a5f',
+            syntaxKeyword: '#ccaabb'
+          }
+        },
+        sunset: {
+          config: {
+            bgColor: '#c0c0c0',
+            textColor: '#92400e',
+            borderColor: '#f59e0b',
+            editorBg: '#fef7cd',
+            editorText: '#92400e',
+            editorFocusBg: '#fef3c7',
+            controlsBg: '#fef7cd',
+            primaryBg: '#f97316',
+            primaryText: '#ffffff',
+            primaryHover: '#ea580c',
+            secondaryBg: '#f59e0b',
+            secondaryText: '#92400e',
+            secondaryHover: '#d97706',
+            mutedText: '#a16207',
+            errorText: '#dc2626',
+            errorBg: '#fef2f2',
+            errorBorder: '#f87171',
+            tableHeaderBg: '#fef3c7',
+            tableHeaderText: '#92400e',
+            tableHover: '#fef7cd'
+          }
+        }
+      }
+    });
+
+    // Initialize all embeds
+    window.SQLWorkbench.init();
+  </script>
+</body>
+</html>

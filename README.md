@@ -84,6 +84,8 @@ npm run preview:prod
 ### Examples
 
 - **Basic Example**: [examples/index.html](examples/index.html) - Vanilla JavaScript integration
+- **unpkg CDN (UMD)**: [examples/unpkg.html](examples/unpkg.html) - Loading from unpkg as UMD module
+- **unpkg CDN (ESM)**: [examples/unpkg-esm.html](examples/unpkg-esm.html) - Loading from unpkg as ES module
 - **Typography Example**: [examples/typography.html](examples/typography.html) - Font customization examples
 - **React Example**: [examples/react.html](examples/react.html) - React component integration
 - **Vue Example**: [examples/vue.html](examples/vue.html) - Vue 3 component integration
@@ -575,6 +577,8 @@ src/
 
 examples/
 ├── index.html            # Basic vanilla JS example
+├── unpkg.html            # unpkg CDN example (UMD)
+├── unpkg-esm.html        # unpkg CDN example (ESM)
 ├── typography.html       # Typography customization examples
 ├── react.html            # React integration example
 └── vue.html              # Vue 3 integration example
