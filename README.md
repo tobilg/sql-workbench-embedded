@@ -39,7 +39,7 @@ A lightweight JavaScript library that transforms static SQL code blocks into int
   <script src="https://unpkg.com/sql-workbench-embedded@latest"></script>
 
   <!-- Specific version (recommended for production) -->
-  <script src="https://unpkg.com/sql-workbench-embedded@0.1.0"></script>
+  <script src="https://unpkg.com/sql-workbench-embedded@0.1.1"></script>
 </body>
 </html>
 ```
@@ -61,7 +61,7 @@ A lightweight JavaScript library that transforms static SQL code blocks into int
   <script src="https://cdn.jsdelivr.net/npm/sql-workbench-embedded@latest"></script>
 
   <!-- Specific version (recommended for production) -->
-  <script src="https://cdn.jsdelivr.net/npm/sql-workbench-embedded@0.1.0"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sql-workbench-embedded@0.1.1"></script>
 </body>
 </html>
 ```
@@ -139,10 +139,10 @@ const embed = new SQLWorkbench.Embedded(element, {
 
 ```html
 <!-- Using unpkg -->
-<script src="https://unpkg.com/sql-workbench-embedded@0.1.0"></script>
+<script src="https://unpkg.com/sql-workbench-embedded@0.1.1"></script>
 
 <!-- Or using jsDelivr -->
-<script src="https://cdn.jsdelivr.net/npm/sql-workbench-embedded@0.1.0"></script>
+<script src="https://cdn.jsdelivr.net/npm/sql-workbench-embedded@0.1.1"></script>
 
 <script>
   // Configure globally
