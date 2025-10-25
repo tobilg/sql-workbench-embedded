@@ -356,7 +356,9 @@ ORDER BY date;`
               <h2>🚀 Vue Integration Example</h2>
               <p>This example demonstrates how to integrate SQL Workbench Embed with Vue 3 components. Each SQL block below is a Vue component that automatically initializes the SQL Workbench when mounted.</p>
               <ul>
-                <li><strong>Edit & Execute:</strong> Click on any SQL code to edit it, then press <code>Ctrl+Enter</code> to run</li>
+                <li><strong>Edit & Execute:</strong> Click on any SQL code to edit it, then press <code>Ctrl+Enter</code> (Mac: <code>Cmd+Enter</code>) to run</li>
+                <li><strong>Reset Code:</strong> Press <code>Ctrl+Backspace</code> (Mac: <code>Cmd+Backspace</code>) to restore the original code</li>
+                <li><strong>Open in SQL Workbench:</strong> Press <code>Ctrl+Shift+Enter</code> (Mac: <code>Cmd+Shift+Enter</code>) to open your query in the full SQL Workbench</li>
                 <li><strong>Vue Components:</strong> Each example is a separate Vue component with proper lifecycle management</li>
                 <li><strong>Automatic Cleanup:</strong> Components properly clean up when unmounted using onUnmounted</li>
                 <li><strong>Reactive Data:</strong> Uses Vue 3's Composition API with refs and reactive state</li>

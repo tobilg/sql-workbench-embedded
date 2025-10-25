@@ -1,5 +1,5 @@
 /**
- * SQL Workbench Embed
+ * SQL Workbench Embedded
  * Main entry point
  */
 
