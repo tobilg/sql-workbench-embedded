@@ -690,4 +690,331 @@ describe('Embedded', () => {
     });
 
   });
+
+  describe('initQueries integration', () => {
+    it('should configure init queries when DuckDB not initialized', async () => {
+      vi.useRealTimers();
+      const element = createSQLElement('SELECT 1');
+      const embed = new Embedded(element, {
+        initQueries: ['INSTALL spatial', 'LOAD spatial'],
+      });
+
+      vi.mocked(duckDBManager.isInitialized).mockReturnValue(false);
+
+      await embed.run();
+
+      expect(duckDBManager.configure).toHaveBeenCalled();
+      expect(duckDBManager.configureInitQueries).toHaveBeenCalledWith([
+        'INSTALL spatial',
+        'LOAD spatial',
+      ]);
+
+      vi.useFakeTimers();
+    });
+
+    it('should not configure init queries if DuckDB already initialized', async () => {
+      vi.useRealTimers();
+      const element = createSQLElement('SELECT 1');
+      const embed = new Embedded(element, {
+        initQueries: ['INSTALL spatial', 'LOAD spatial'],
+      });
+
+      vi.mocked(duckDBManager.isInitialized).mockReturnValue(true);
+
+      await embed.run();
+
+      expect(duckDBManager.configure).not.toHaveBeenCalled();
+      expect(duckDBManager.configureInitQueries).not.toHaveBeenCalled();
+
+      vi.useFakeTimers();
+    });
+
+    it('should skip init queries configuration if none provided', async () => {
+      vi.useRealTimers();
+      const element = createSQLElement('SELECT 1');
+      const embed = new Embedded(element);
+
+      vi.mocked(duckDBManager.isInitialized).mockReturnValue(false);
+
+      await embed.run();
+
+      expect(duckDBManager.configure).toHaveBeenCalled();
+      expect(duckDBManager.configureInitQueries).not.toHaveBeenCalled();
+
+      vi.useFakeTimers();
+    });
+
+    it('should skip init queries configuration if empty array', async () => {
+      vi.useRealTimers();
+      const element = createSQLElement('SELECT 1');
+      const embed = new Embedded(element, { initQueries: [] });
+
+      vi.mocked(duckDBManager.isInitialized).mockReturnValue(false);
+
+      await embed.run();
+
+      expect(duckDBManager.configure).toHaveBeenCalled();
+      expect(duckDBManager.configureInitQueries).not.toHaveBeenCalled();
+
+      vi.useFakeTimers();
+    });
+
+    it('should support spatial extension installation', async () => {
+      vi.useRealTimers();
+      const element = createSQLElement('SELECT ST_Distance(ST_Point(0, 0), ST_Point(3, 4))');
+      const embed = new Embedded(element, {
+        initQueries: ['INSTALL spatial', 'LOAD spatial'],
+      });
+
+      vi.mocked(duckDBManager.isInitialized).mockReturnValue(false);
+
+      await embed.run();
+
+      expect(duckDBManager.configureInitQueries).toHaveBeenCalledWith([
+        'INSTALL spatial',
+        'LOAD spatial',
+      ]);
+
+      vi.useFakeTimers();
+    });
+
+    it('should support a5 community extension installation', async () => {
+      vi.useRealTimers();
+      const element = createSQLElement('SELECT ai5() FROM generate_series(1, 10)');
+      const embed = new Embedded(element, {
+        initQueries: ['INSTALL a5 FROM community', 'LOAD a5'],
+      });
+
+      vi.mocked(duckDBManager.isInitialized).mockReturnValue(false);
+
+      await embed.run();
+
+      expect(duckDBManager.configureInitQueries).toHaveBeenCalledWith([
+        'INSTALL a5 FROM community',
+        'LOAD a5',
+      ]);
+
+      vi.useFakeTimers();
+    });
+
+    it('should support multiple extensions in init queries', async () => {
+      vi.useRealTimers();
+      const element = createSQLElement('SELECT 1');
+      const embed = new Embedded(element, {
+        initQueries: [
+          'INSTALL spatial',
+          'LOAD spatial',
+          'INSTALL a5 FROM community',
+          'LOAD a5',
+          'INSTALL json',
+          'LOAD json',
+        ],
+      });
+
+      vi.mocked(duckDBManager.isInitialized).mockReturnValue(false);
+
+      await embed.run();
+
+      expect(duckDBManager.configureInitQueries).toHaveBeenCalledWith([
+        'INSTALL spatial',
+        'LOAD spatial',
+        'INSTALL a5 FROM community',
+        'LOAD a5',
+        'INSTALL json',
+        'LOAD json',
+      ]);
+
+      vi.useFakeTimers();
+    });
+
+    it('should support configuration options in init queries', async () => {
+      vi.useRealTimers();
+      const element = createSQLElement('SELECT 1');
+      const embed = new Embedded(element, {
+        initQueries: ["SET memory_limit='2GB'", 'SET threads=4'],
+      });
+
+      vi.mocked(duckDBManager.isInitialized).mockReturnValue(false);
+
+      await embed.run();
+
+      expect(duckDBManager.configureInitQueries).toHaveBeenCalledWith([
+        "SET memory_limit='2GB'",
+        'SET threads=4',
+      ]);
+
+      vi.useFakeTimers();
+    });
+
+    it('should support user-defined functions in init queries', async () => {
+      vi.useRealTimers();
+      const element = createSQLElement('SELECT add_tax(100, 0.08)');
+      const embed = new Embedded(element, {
+        initQueries: [
+          'CREATE MACRO add_tax(price, rate) AS price * (1 + rate)',
+          'CREATE MACRO full_name(first, last) AS first || \' \' || last',
+        ],
+      });
+
+      vi.mocked(duckDBManager.isInitialized).mockReturnValue(false);
+
+      await embed.run();
+
+      expect(duckDBManager.configureInitQueries).toHaveBeenCalledWith([
+        'CREATE MACRO add_tax(price, rate) AS price * (1 + rate)',
+        'CREATE MACRO full_name(first, last) AS first || \' \' || last',
+      ]);
+
+      vi.useFakeTimers();
+    });
+
+    it('should handle init query errors gracefully', async () => {
+      vi.useRealTimers();
+      const element = createSQLElement('SELECT 1');
+      const embed = new Embedded(element, {
+        initQueries: ['INVALID SQL'],
+      });
+
+      vi.mocked(duckDBManager.isInitialized).mockReturnValue(false);
+      vi.mocked(duckDBManager.query).mockRejectedValue(
+        new Error('Initialization query failed: Syntax error')
+      );
+
+      await embed.run();
+
+      const output = embed.getContainer()?.querySelector('.sql-workbench-output');
+      expect(output?.textContent).toContain('Initialization query failed');
+
+      vi.useFakeTimers();
+    });
+  });
+
+  describe('openInSQLWorkbench with initQueries', () => {
+    let windowOpenSpy: any;
+
+    beforeEach(() => {
+      windowOpenSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
+    });
+
+    afterEach(() => {
+      windowOpenSpy.mockRestore();
+    });
+
+    it('should open SQL Workbench with query only when no init queries', () => {
+      const element = createSQLElement('SELECT 42');
+      const embed = new Embedded(element);
+
+      const openButton = embed.getContainer()?.querySelector('.sql-workbench-button-open') as HTMLButtonElement;
+      openButton?.click();
+
+      expect(windowOpenSpy).toHaveBeenCalledWith(
+        expect.stringContaining('https://sql-workbench.com/#queries=v1,'),
+        '_blank',
+        'noopener'
+      );
+
+      // Verify the URL doesn't contain init queries
+      const calledUrl = windowOpenSpy.mock.calls[0][0];
+      expect(calledUrl).not.toContain('INSTALL');
+      expect(calledUrl).not.toContain('LOAD');
+    });
+
+    it('should prepend init queries to encoded query', () => {
+      const element = createSQLElement('SELECT 42');
+      const embed = new Embedded(element, {
+        initQueries: ['INSTALL spatial', 'LOAD spatial'],
+      });
+
+      const openButton = embed.getContainer()?.querySelector('.sql-workbench-button-open') as HTMLButtonElement;
+      openButton?.click();
+
+      expect(windowOpenSpy).toHaveBeenCalled();
+      const calledUrl = windowOpenSpy.mock.calls[0][0];
+
+      // Decode the URL to verify init queries are included
+      const encodedPart = calledUrl.split('queries=v1,')[1];
+      // Convert URL-safe base64 back to standard base64
+      const base64 = encodedPart.replace(/-/g, '+').replace(/_/g, '/');
+      // Add padding if needed
+      const paddedBase64 = base64 + '==='.slice(0, (4 - base64.length % 4) % 4);
+      const decodedQuery = decodeURIComponent(escape(atob(paddedBase64)));
+
+      expect(decodedQuery).toContain('INSTALL spatial');
+      expect(decodedQuery).toContain('LOAD spatial');
+      expect(decodedQuery).toMatch(/SELECT\s+42/);
+    });
+
+    it('should format init queries with semicolons and newlines', () => {
+      const element = createSQLElement('SELECT 1');
+      const embed = new Embedded(element, {
+        initQueries: ['INSTALL spatial', 'LOAD spatial', 'INSTALL a5 FROM community'],
+      });
+
+      const openButton = embed.getContainer()?.querySelector('.sql-workbench-button-open') as HTMLButtonElement;
+      openButton?.click();
+
+      const calledUrl = windowOpenSpy.mock.calls[0][0];
+      const encodedPart = calledUrl.split('queries=v1,')[1];
+      const base64 = encodedPart.replace(/-/g, '+').replace(/_/g, '/');
+      const paddedBase64 = base64 + '==='.slice(0, (4 - base64.length % 4) % 4);
+      const decodedQuery = decodeURIComponent(escape(atob(paddedBase64)));
+
+      // Verify proper formatting
+      expect(decodedQuery).toMatch(/INSTALL spatial;\s*\n/);
+      expect(decodedQuery).toMatch(/LOAD spatial;\s*\n/);
+      expect(decodedQuery).toMatch(/INSTALL a5 FROM community;\s*\n/);
+      expect(decodedQuery).toMatch(/;\s*\n\s*SELECT\s+1/);
+    });
+
+    it('should handle empty init queries array', () => {
+      const element = createSQLElement('SELECT 42');
+      const embed = new Embedded(element, {
+        initQueries: [],
+      });
+
+      const openButton = embed.getContainer()?.querySelector('.sql-workbench-button-open') as HTMLButtonElement;
+      openButton?.click();
+
+      expect(windowOpenSpy).toHaveBeenCalled();
+      const calledUrl = windowOpenSpy.mock.calls[0][0];
+      const encodedPart = calledUrl.split('queries=v1,')[1];
+      const base64 = encodedPart.replace(/-/g, '+').replace(/_/g, '/');
+      const paddedBase64 = base64 + '==='.slice(0, (4 - base64.length % 4) % 4);
+      const decodedQuery = decodeURIComponent(escape(atob(paddedBase64)));
+
+      // Should only contain user query (with possible whitespace variations)
+      expect(decodedQuery).toMatch(/SELECT\s+42/);
+      expect(decodedQuery).not.toContain('INSTALL');
+    });
+
+    it('should work with keyboard shortcut Cmd+Shift+Enter', () => {
+      const element = createSQLElement('SELECT 1');
+      const embed = new Embedded(element, {
+        initQueries: ['INSTALL spatial'],
+      });
+
+      const editor = embed.getContainer()?.querySelector('.sql-workbench-editor') as HTMLElement;
+      const event = new KeyboardEvent('keydown', {
+        key: 'Enter',
+        metaKey: true,
+        shiftKey: true,
+        bubbles: true,
+      });
+      editor?.dispatchEvent(event);
+
+      expect(windowOpenSpy).toHaveBeenCalled();
+    });
+
+    it('should not open when query is empty', () => {
+      const element = createSQLElement('   ');
+      const embed = new Embedded(element, {
+        initQueries: ['INSTALL spatial'],
+      });
+
+      const openButton = embed.getContainer()?.querySelector('.sql-workbench-button-open') as HTMLButtonElement;
+      openButton?.click();
+
+      expect(windowOpenSpy).not.toHaveBeenCalled();
+    });
+  });
 });

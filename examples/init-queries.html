@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SQL Workbench Embedded - Init Queries Example</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+      background: #f5f5f5;
+    }
+
+    h1 {
+      color: #1f2937;
+      margin-bottom: 0.5rem;
+    }
+
+    .subtitle {
+      color: #6b7280;
+      margin-bottom: 2rem;
+    }
+
+    .example-section {
+      margin-bottom: 3rem;
+    }
+
+    .example-section h2 {
+      color: #1f2937;
+      margin-bottom: 1rem;
+    }
+
+    .example-section p {
+      color: #4b5563;
+      margin-bottom: 1rem;
+      line-height: 1.6;
+    }
+
+    .info-box {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .info-box.warning {
+      background: #fffbeb;
+      border-color: #fbbf24;
+    }
+
+    .info-box h3 {
+      margin-top: 0;
+      color: #1f2937;
+    }
+
+    .info-box ul {
+      margin: 0.5rem 0;
+      padding-left: 1.5rem;
+    }
+
+    .info-box li {
+      color: #4b5563;
+      margin-bottom: 0.5rem;
+    }
+
+    .code-block {
+      background: #1f2937;
+      color: #f9fafb;
+      padding: 1rem;
+      border-radius: 8px;
+      overflow-x: auto;
+      margin: 1rem 0;
+    }
+
+    .code-block pre {
+      margin: 0;
+      font-family: 'Monaco', 'Menlo', monospace;
+      font-size: 0.9em;
+    }
+
+    code {
+      background: #f3f4f6;
+      padding: 0.2rem 0.4rem;
+      border-radius: 3px;
+      font-family: 'Monaco', 'Menlo', monospace;
+      font-size: 0.9em;
+    }
+
+    .highlight {
+      background: #fef3c7;
+      padding: 0.2rem 0.4rem;
+      border-radius: 3px;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <h1>SQL Workbench Embedded</h1>
+  <p class="subtitle">Init Queries Feature - DuckDB Extension Management</p>
+
+  <div class="info-box">
+    <h3>About Init Queries</h3>
+    <p>
+      The <code>initQueries</code> configuration allows you to execute initialization SQL queries
+      <strong>once per page</strong> before any user query runs. This is perfect for:
+    </p>
+    <ul>
+      <li>Installing and loading DuckDB extensions (spatial, json, etc.)</li>
+      <li>Installing community extensions from custom repositories</li>
+      <li>Setting global DuckDB configuration options</li>
+      <li>Creating reusable user-defined functions</li>
+      <li>Pre-loading reference data or schemas</li>
+    </ul>
+    <p>
+      <strong>Key behaviors:</strong>
+    </p>
+    <ul>
+      <li>✅ Executes only once across all embeds on the page</li>
+      <li>✅ Runs in array order sequentially</li>
+      <li>✅ Lazy execution - only when first "Run" button is pressed</li>
+      <li>✅ All embeds share the same DuckDB instance and extensions</li>
+    </ul>
+  </div>
+
+  <div class="info-box warning">
+    <h3>⚠️ Important</h3>
+    <p>
+      In this example, the <code>INSTALL</code> and <code>LOAD</code> commands for the
+      <strong>spatial</strong> extension and the community <strong>a5</strong> extension
+      are configured as init queries. This allows all embeds below to use geospatial functions
+      and additional utility functions without needing to install the extensions in each query.
+    </p>
+    <p>
+      Open your browser console to see the init queries being executed when you click
+      <strong>Run</strong> on any embed for the first time.
+    </p>
+  </div>
+
+  <div class="example-section">
+    <h2>Configuration</h2>
+    <p>Add this before your embeds initialize:</p>
+    <div class="code-block"><pre>&lt;script&gt;
+  // Configure init queries globally
+  window.SQLWorkbench.config({
+    initQueries: [
+      "INSTALL spatial",
+      "LOAD spatial",
+      "INSTALL a5 FROM community",
+      "LOAD a5"
+    ]
+  });
+&lt;/script&gt;</pre></div>
+  </div>
+
+  <div class="example-section">
+    <h2>Example 1: Spatial Distance Calculations</h2>
+    <p>
+      This query uses the <code>spatial</code> extension to calculate distances between points
+      using geospatial functions that were installed via init queries.
+    </p>
+    <pre class="sql-workbench-embedded"><code>-- Calculate distances between cities using spatial extension
+WITH cities AS (
+  SELECT 'New York' as city, 40.7128 as lat, -74.0060 as lon
+  UNION ALL
+  SELECT 'Los Angeles', 34.0522, -118.2437
+  UNION ALL
+  SELECT 'Chicago', 41.8781, -87.6298
+  UNION ALL
+  SELECT 'Houston', 29.7604, -95.3698
+)
+SELECT
+  c1.city as city1,
+  c2.city as city2,
+  ROUND(
+    ST_Distance(
+      ST_Point(c1.lon, c1.lat),
+      ST_Point(c2.lon, c2.lat)
+    ) / 1000, 2
+  ) as distance_km
+FROM cities c1
+CROSS JOIN cities c2
+WHERE c1.city > c2.city
+ORDER BY distance_km DESC;</code></pre>
+  </div>
+
+  <div class="example-section">
+    <h2>Example 2: Geospatial Point Creation</h2>
+    <p>
+      Create and manipulate geospatial points using the spatial extension functions.
+      The extension is already loaded from the first query execution.
+    </p>
+    <pre class="sql-workbench-embedded">-- Create points and extract coordinates
+SELECT
+  'Office' as location,
+  ST_Point(-122.4194, 37.7749) as point,
+  ST_X(ST_Point(-122.4194, 37.7749)) as longitude,
+  ST_Y(ST_Point(-122.4194, 37.7749)) as latitude,
+  ST_AsText(ST_Point(-122.4194, 37.7749)) as wkt_format
+UNION ALL
+SELECT
+  'Home',
+  ST_Point(-122.4089, 37.7833),
+  ST_X(ST_Point(-122.4089, 37.7833)),
+  ST_Y(ST_Point(-122.4089, 37.7833)),
+  ST_AsText(ST_Point(-122.4089, 37.7833));</pre>
+  </div>
+
+  <div class="example-section">
+    <h2>Example 3: A5 Extension - GeoJSON Generation</h2>
+    <p>
+      Use the community <code>a5</code> extension to convert geographic coordinates
+      into A5 cells and generate GeoJSON polygons. This demonstrates that community
+      extensions work seamlessly with the spatial extension.
+    </p>
+    <pre class="sql-workbench-embedded">-- Generate GeoJSON for A5 cell (Madrid coordinates)
+SELECT
+  ST_AsGeoJSON(
+    ST_MakePolygon(
+      ST_MakeLine(
+        list_transform(
+          a5_cell_to_boundary(
+            a5_lonlat_to_cell(-3.7037, 40.41677, 10)
+          ),
+          x -> ST_Point(x[1], x[2])
+        )
+      )
+    )
+  ) as geojson;</pre>
+  </div>
+
+  <div class="example-section">
+    <h2>More Init Query Examples</h2>
+    <p>Here are other common use cases for init queries:</p>
+    <div class="code-block"><pre>// Install official extension
+window.SQLWorkbench.config({
+  initQueries: [
+    "INSTALL spatial",
+    "LOAD spatial",
+  ]
+});
+
+// Install community extensions
+window.SQLWorkbench.config({
+  initQueries: [
+    "INSTALL a5 FROM community",
+    "LOAD a5"
+  ]
+});
+
+// Create user-defined functions
+window.SQLWorkbench.config({
+  initQueries: [
+    "CREATE MACRO add_tax(price, rate) AS price * (1 + rate)",
+    "CREATE MACRO full_name(first, last) AS first || ' ' || last",
+    "CREATE MACRO distance_km(lat1, lon1, lat2, lon2) AS ST_Distance(ST_Point(lon1, lat1), ST_Point(lon2, lat2)) / 1000"
+  ]
+});</pre></div>
+  </div>
+
+  <div class="info-box">
+    <h3>📚 Learn More</h3>
+    <ul>
+      <li><a href="https://duckdb.org/docs/extensions/overview.html" target="_blank">DuckDB Extensions Documentation</a></li>
+      <li><a href="https://duckdb.org/docs/extensions/spatial.html" target="_blank">Spatial Extension</a></li>
+      <li><a href="https://community-extensions.duckdb.org/extensions/a5.html" target="_blank">A5 Community Extension</a></li>
+      <li><a href="https://duckdb.org/docs/sql/configuration.html" target="_blank">DuckDB Configuration</a></li>
+    </ul>
+  </div>
+
+  <script type="module">
+    import SQLWorkbench from '../src/index.ts';
+
+    // Configure init queries BEFORE embeds initialize
+    SQLWorkbench.config({
+      initQueries: [
+        "INSTALL spatial",
+        "LOAD spatial",
+        "INSTALL a5 FROM community",
+        "LOAD a5"
+      ],
+      theme: 'auto'
+    });
+
+    // Embeds will auto-initialize and benefit from init queries
+  </script>
+</body>
+</html>

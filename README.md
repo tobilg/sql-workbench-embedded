@@ -7,12 +7,13 @@ A lightweight JavaScript library that transforms static SQL code blocks into int
 ## Features
 
 - **Zero Backend Required**: All SQL execution happens in the browser
-- **Lightweight**: 9.29 kB gzipped bundle (28.66 kB minified)
+- **Lightweight**: 9.49 kB gzipped bundle (29.67 kB minified)
 - **Easy Integration**: Just add a CSS class to your code blocks
 - **Interactive Editing**: Edit SQL queries with real-time syntax highlighting
 - **Framework Agnostic**: Works with vanilla JS, React, Vue, and more
 - **Privacy-Focused**: No data transmission to external servers
 - **Lazy Loading**: DuckDB WASM loads only when needed
+- **Init Queries**: Execute initialization queries once for extension management
 - **Path Resolution**: Automatic resolution of relative file paths in SQL queries
 - **Theme Support**: Light, dark, auto themes with full customization
 - **Typography Customization**: Customize fonts and sizes per theme
@@ -84,6 +85,7 @@ npm run preview:prod
 ### Examples
 
 - **Basic Example**: [examples/index.html](examples/index.html) - Vanilla JavaScript integration
+- **Init Queries Example**: [examples/init-queries.html](examples/init-queries.html) - DuckDB extension management with initQueries
 - **unpkg CDN (UMD)**: [examples/unpkg.html](examples/unpkg.html) - Loading from unpkg as UMD module
 - **unpkg CDN (ESM)**: [examples/unpkg-esm.html](examples/unpkg-esm.html) - Loading from unpkg as ES module
 - **Typography Example**: [examples/typography.html](examples/typography.html) - Font customization examples
@@ -175,6 +177,7 @@ SQLWorkbench.config({
   duckdbCDN: 'https://cdn.jsdelivr.net/npm/@duckdb/duckdb-wasm',
   editable: true,  // Allow code editing
   showOpenButton: true,  // Show "Open in SQL Workbench" button
+  initQueries: [],  // Initialization queries to execute once before first user query
 });
 ```
 
@@ -188,6 +191,88 @@ const embed = new SQLWorkbench.Embedded(element, {
   showOpenButton: false,  // Hide "Open in SQL Workbench" button for this instance
 });
 ```
+
+## Initialization Queries
+
+The `initQueries` configuration allows you to execute SQL queries once before any user query runs. This is perfect for installing and loading DuckDB extensions, setting configuration options, or creating user-defined functions.
+
+### Key Features
+
+- ✅ Executes only once across all embeds on the page
+- ✅ Runs sequentially in array order
+- ✅ Lazy execution - only when the first "Run" button is pressed
+- ✅ All embeds share the same DuckDB instance and extensions
+
+### Installing Extensions
+
+```javascript
+SQLWorkbench.config({
+  initQueries: [
+    "INSTALL spatial",
+    "LOAD spatial",
+    "INSTALL a5 FROM community",
+    "LOAD a5"
+  ]
+});
+```
+
+Now all embeds can use spatial functions and community extensions:
+
+```html
+<pre class="sql-workbench-embedded">
+  SELECT ST_Distance(
+    ST_Point(-74.0060, 40.7128),
+    ST_Point(-118.2437, 34.0522)
+  ) / 1000 AS distance_km;
+</pre>
+
+<pre class="sql-workbench-embedded">
+  -- Generate GeoJSON for A5 cell
+  SELECT ST_AsGeoJSON(
+    ST_MakePolygon(
+      ST_MakeLine(
+        list_transform(
+          a5_cell_to_boundary(a5_lonlat_to_cell(-3.7037, 40.41677, 10)),
+          x -> ST_Point(x[1], x[2])
+        )
+      )
+    )
+  ) as geojson;
+</pre>
+```
+
+### Setting Configuration Options
+
+```javascript
+SQLWorkbench.config({
+  initQueries: [
+    "SET memory_limit='2GB'",
+    "SET threads=4"
+  ]
+});
+```
+
+### Creating User-Defined Functions
+
+```javascript
+SQLWorkbench.config({
+  initQueries: [
+    "CREATE MACRO add_tax(price, rate) AS price * (1 + rate)",
+    "CREATE MACRO full_name(first, last) AS first || ' ' || last"
+  ]
+});
+```
+
+### Error Handling
+
+If an initialization query fails:
+- The error is shown to the user
+- The user query is not executed
+- The init query state is reset, allowing retry on next run
+
+### Example
+
+See [examples/init-queries.html](examples/init-queries.html) for a complete working example with the spatial and a5 community extensions.
 
 ### Theme Priority
 
@@ -535,21 +620,21 @@ export default {
 
 The library is optimized for production with minimal bundle size:
 
-- **UMD Bundle**: 28.66 kB minified, 9.29 kB gzipped
-- **ES Module**: 29.35 kB minified, 9.33 kB gzipped
+- **UMD Bundle**: 29.67 kB minified, 9.49 kB gzipped
+- **ES Module**: 30.38 kB minified, 9.54 kB gzipped
 - **DuckDB WASM**: Loaded separately from CDN (~5MB on first use)
 
 ### Size Breakdown
 
 - **SQL Workbench Embed**: ~20 kB (UI, syntax highlighting, path resolution, theming)
 - **DuckDB Client Library**: ~6 kB (minimal DuckDB bindings)
-- **Build Overhead**: ~2 kB (UMD wrapper, utilities)
+- **Build Overhead**: ~3 kB (UMD wrapper, utilities)
 
 ### Performance Impact
 
-- **Initial Load**: 9.29 kB gzipped (extremely lightweight)
+- **Initial Load**: 9.49 kB gzipped (extremely lightweight)
 - **First Query**: Additional ~5MB for DuckDB WASM binary (cached thereafter)
-- **Subsequent Loads**: Only 9.29 kB (DuckDB cached)
+- **Subsequent Loads**: Only 9.49 kB (DuckDB cached)
 
 The production build maintains a compact size while providing full functionality including typography customization.
 
@@ -577,6 +662,7 @@ src/
 
 examples/
 ├── index.html            # Basic vanilla JS example
+├── init-queries.html     # Init queries / extension management example
 ├── unpkg.html            # unpkg CDN example (UMD)
 ├── unpkg-esm.html        # unpkg CDN example (ESM)
 ├── typography.html       # Typography customization examples

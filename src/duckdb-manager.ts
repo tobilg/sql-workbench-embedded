@@ -20,6 +20,9 @@ class DuckDBManager {
   private config: DuckDBManagerConfig;
   private registeredFiles = new Set<string>();
   private duckdbModule: any = null;
+  private initQueriesExecuted = false;
+  private initQueriesPromise: Promise<void> | null = null;
+  private initQueries: string[] = [];
 
   constructor() {
     this.config = {
@@ -37,6 +40,18 @@ class DuckDBManager {
       return;
     }
     this.config = { ...this.config, ...config };
+  }
+
+  /**
+   * Configure initialization queries
+   * Must be called before first query execution
+   */
+  configureInitQueries(queries: string[]): void {
+    if (this.initQueriesExecuted) {
+      console.warn('Init queries already executed, configuration will not take effect');
+      return;
+    }
+    this.initQueries = queries;
   }
 
   /**
@@ -155,6 +170,52 @@ class DuckDBManager {
   }
 
   /**
+   * Execute initialization queries once
+   */
+  private async executeInitQueries(): Promise<void> {
+    // Already executed
+    if (this.initQueriesExecuted) {
+      return;
+    }
+
+    // Already executing (race condition protection)
+    if (this.initQueriesPromise) {
+      return this.initQueriesPromise;
+    }
+
+    // No init queries configured
+    if (!this.initQueries.length) {
+      this.initQueriesExecuted = true;
+      return;
+    }
+
+    this.initQueriesPromise = (async () => {
+      try {
+        console.log(`Executing ${this.initQueries.length} initialization queries...`);
+
+        for (let i = 0; i < this.initQueries.length; i++) {
+          const query = this.initQueries[i];
+          console.log(`Init query [${i + 1}/${this.initQueries.length}]: ${query}`);
+
+          // Execute via connection (DuckDB must be initialized first)
+          await this.connection.query(query);
+        }
+
+        console.log('Initialization queries completed successfully');
+        this.initQueriesExecuted = true;
+      } catch (error) {
+        // Reset state to allow retry on next run
+        this.initQueriesPromise = null;
+        throw new Error(
+          `Initialization query failed: ${error instanceof Error ? error.message : String(error)}`
+        );
+      }
+    })();
+
+    return this.initQueriesPromise;
+  }
+
+  /**
    * Register a file URL with DuckDB
    */
   async registerFile(name: string, url: string): Promise<void> {
@@ -183,6 +244,9 @@ class DuckDBManager {
    */
   async query(sql: string): Promise<QueryResult> {
     await this.initialize();
+
+    // Execute init queries if configured and not yet executed
+    await this.executeInitQueries();
 
     if (!this.connection) {
       throw new Error('DuckDB connection not available');
@@ -234,6 +298,11 @@ class DuckDBManager {
 
     this.initPromise = null;
     this.registeredFiles.clear();
+
+    // Reset init queries state
+    this.initQueriesExecuted = false;
+    this.initQueriesPromise = null;
+    this.initQueries = [];
   }
 
   /**

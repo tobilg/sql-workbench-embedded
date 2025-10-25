@@ -396,6 +396,11 @@ export class Embedded {
           version: this.options.duckdbVersion,
           cdn: this.options.duckdbCDN,
         });
+
+        // Configure init queries from global config
+        if (this.options.initQueries && this.options.initQueries.length > 0) {
+          duckDBManager.configureInitQueries(this.options.initQueries);
+        }
       }
 
       // Resolve and register file paths
@@ -580,9 +585,16 @@ export class Embedded {
     const query = this.getCode();
     if (!query.trim()) return;
 
-    const encodedQuery = this.encodeQueryForURL(query);
+    // Prepend init queries if configured
+    let fullQuery = query;
+    if (this.options.initQueries && this.options.initQueries.length > 0) {
+      const initQueriesBlock = this.options.initQueries.join(';\n') + ';\n\n';
+      fullQuery = initQueriesBlock + query;
+    }
+
+    const encodedQuery = this.encodeQueryForURL(fullQuery);
     const url = `https://sql-workbench.com/#queries=v1,${encodedQuery}`;
-    
+
     window.open(url, '_blank', 'noopener');
   }
 

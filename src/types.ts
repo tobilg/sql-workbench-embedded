@@ -100,6 +100,13 @@ export interface SQLWorkbenchConfig {
   editable?: boolean;
   /** Show "Open in SQL Workbench" button */
   showOpenButton?: boolean;
+  /**
+   * Initialization queries to execute once before first user query.
+   * Useful for installing/loading DuckDB extensions.
+   * Queries execute sequentially in array order.
+   * Example: ["INSTALL httpfs", "LOAD httpfs"]
+   */
+  initQueries?: string[];
 }
 
 /**
@@ -151,4 +158,5 @@ export const DEFAULT_CONFIG: Required<SQLWorkbenchConfig> = {
   duckdbCDN: 'https://cdn.jsdelivr.net/npm/@duckdb/duckdb-wasm',
   editable: true,
   showOpenButton: true,
+  initQueries: [],
 };
