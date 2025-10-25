@@ -43,7 +43,7 @@ export default defineConfig({
     dts({
       insertTypesEntry: true,
       rollupTypes: true, // Bundle all .d.ts files into a single file
-      exclude: ['**/*.test.ts', '**/*.spec.ts', 'examples/**'],
+      exclude: ['**/*.test.ts', '**/*.spec.ts', '**/__tests__/**', 'examples/**', 'node_modules/**'],
     }),
     minifyESM(),
   ],
