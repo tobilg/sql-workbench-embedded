@@ -282,6 +282,20 @@ export const CSS_STYLES = `
   background: var(--sw-secondary-hover);
 }
 
+.sql-workbench-button-icon {
+  padding: 0.375rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: auto;
+}
+
+.sql-workbench-button-icon svg {
+  width: 16px;
+  height: 16px;
+  display: block;
+}
+
 .sql-workbench-output {
   padding: 1rem;
   min-height: 20px;

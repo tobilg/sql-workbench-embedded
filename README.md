@@ -172,6 +172,7 @@ SQLWorkbench.config({
   duckdbVersion: '1.31.1-dev1.0',  // DuckDB version
   duckdbCDN: 'https://cdn.jsdelivr.net/npm/@duckdb/duckdb-wasm',
   editable: true,  // Allow code editing
+  showOpenButton: true,  // Show "Open in SQL Workbench" button
 });
 ```
 
@@ -182,6 +183,7 @@ const embed = new SQLWorkbench.Embed(element, {
   initialCode: 'SELECT 1;',
   theme: 'dark',
   editable: false,
+  showOpenButton: false,  // Hide "Open in SQL Workbench" button for this instance
 });
 ```
 
@@ -368,9 +370,30 @@ SQLWorkbench.config({
 });
 ```
 
+## Open in SQL Workbench
+
+Each embed includes an "Open in SQL Workbench" button (enabled by default) that opens the current query in the full [SQL Workbench](https://sql-workbench.com) web application. The query is encoded in the URL hash using URL-safe Base64 encoding for sharing and persistence.
+
+To disable this button globally:
+
+```javascript
+SQLWorkbench.config({
+  showOpenButton: false,
+});
+```
+
+Or for a specific instance:
+
+```javascript
+const embed = new SQLWorkbench.Embed(element, {
+  showOpenButton: false,
+});
+```
+
 ## Keyboard Shortcuts
 
 - **Ctrl+Enter** (Mac: **Cmd+Enter**): Execute query
+- **Ctrl+Shift+Enter** (Mac: **Cmd+Shift+Enter**): Open in SQL Workbench
 - **Ctrl+Backspace** (Mac: **Cmd+Backspace**): Reset to original code
 - **Tab**: Navigate between buttons
 

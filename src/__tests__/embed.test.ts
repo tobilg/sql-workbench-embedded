@@ -104,7 +104,7 @@ describe('Embed', () => {
 
       expect(container?.querySelector('.sql-workbench-editor')).toBeTruthy();
       expect(container?.querySelector('.sql-workbench-button-primary')).toBeTruthy();
-      expect(container?.querySelector('.sql-workbench-button-secondary')).toBeTruthy();
+      expect(container?.querySelector('.sql-workbench-button-reset')).toBeTruthy();
       expect(container?.querySelector('.sql-workbench-output')).toBeTruthy();
     });
 
@@ -120,9 +120,26 @@ describe('Embed', () => {
     it('should create Reset button initially hidden', () => {
       const element = createSQLElement('SELECT 1');
       const embed = new Embed(element);
-      const resetButton = embed.getContainer()?.querySelector('.sql-workbench-button-secondary');
+      const resetButton = embed.getContainer()?.querySelector('.sql-workbench-button-reset');
 
       expect(resetButton?.classList.contains('sql-workbench-button-hidden')).toBe(true);
+    });
+
+    it('should create Open button by default', () => {
+      const element = createSQLElement('SELECT 1');
+      const embed = new Embed(element);
+      const openButton = embed.getContainer()?.querySelector('.sql-workbench-button-open');
+
+      expect(openButton).toBeTruthy();
+      expect(openButton?.getAttribute('aria-label')).toBe('Open in SQL Workbench');
+    });
+
+    it('should not create Open button when showOpenButton is false', () => {
+      const element = createSQLElement('SELECT 1');
+      const embed = new Embed(element, { showOpenButton: false });
+      const openButton = embed.getContainer()?.querySelector('.sql-workbench-button-open');
+
+      expect(openButton).toBeFalsy();
     });
 
     it('should create editor with correct attributes', () => {
@@ -270,6 +287,44 @@ describe('Embed', () => {
       // Normalize whitespace/invisible characters and check
       const normalizedText = editor.textContent?.replace(/\s+/g, ' ').trim();
       expect(normalizedText).toBe('SELECT 1');
+    });
+
+    it('should open in SQL Workbench on Ctrl+Shift+Enter', () => {
+      const element = createSQLElement('SELECT 1');
+      const embed = new Embed(element);
+      const editor = embed.getContainer()?.querySelector('.sql-workbench-editor') as HTMLElement;
+
+      const windowOpenSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
+
+      simulateKeyPress(editor, 'Enter', { ctrlKey: true, shiftKey: true });
+
+      expect(windowOpenSpy).toHaveBeenCalled();
+      expect(windowOpenSpy).toHaveBeenCalledWith(
+        expect.stringContaining('https://sql-workbench.com/#queries=v1,'),
+        '_blank',
+        'noopener'
+      );
+
+      windowOpenSpy.mockRestore();
+    });
+
+    it('should open in SQL Workbench on Cmd+Shift+Enter (Mac)', () => {
+      const element = createSQLElement('SELECT 1');
+      const embed = new Embed(element);
+      const editor = embed.getContainer()?.querySelector('.sql-workbench-editor') as HTMLElement;
+
+      const windowOpenSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
+
+      simulateKeyPress(editor, 'Enter', { metaKey: true, shiftKey: true });
+
+      expect(windowOpenSpy).toHaveBeenCalled();
+      expect(windowOpenSpy).toHaveBeenCalledWith(
+        expect.stringContaining('https://sql-workbench.com/#queries=v1,'),
+        '_blank',
+        'noopener'
+      );
+
+      windowOpenSpy.mockRestore();
     });
 
   });
@@ -447,7 +502,7 @@ describe('Embed', () => {
       const runPromise = embed.run();
 
       const runButton = embed.getContainer()?.querySelector('.sql-workbench-button-primary') as HTMLButtonElement;
-      const resetButton = embed.getContainer()?.querySelector('.sql-workbench-button-secondary') as HTMLButtonElement;
+      const resetButton = embed.getContainer()?.querySelector('.sql-workbench-button-reset') as HTMLButtonElement;
 
       expect(runButton?.disabled).toBe(true);
       expect(resetButton?.disabled).toBe(true);
@@ -464,7 +519,7 @@ describe('Embed', () => {
       const element = createSQLElement('SELECT 1');
       const embed = new Embed(element);
 
-      const resetButton = embed.getContainer()?.querySelector('.sql-workbench-button-secondary');
+      const resetButton = embed.getContainer()?.querySelector('.sql-workbench-button-reset');
       expect(resetButton?.classList.contains('sql-workbench-button-hidden')).toBe(true);
 
       await embed.run();
@@ -558,7 +613,7 @@ describe('Embed', () => {
 
       await embed.run();
 
-      const resetButton = embed.getContainer()?.querySelector('.sql-workbench-button-secondary');
+      const resetButton = embed.getContainer()?.querySelector('.sql-workbench-button-reset');
       expect(resetButton?.classList.contains('sql-workbench-button-hidden')).toBe(false);
 
       embed.reset();

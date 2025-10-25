@@ -98,6 +98,8 @@ export interface SQLWorkbenchConfig {
   duckdbCDN?: string;
   /** Allow SQL code editing */
   editable?: boolean;
+  /** Show "Open in SQL Workbench" button */
+  showOpenButton?: boolean;
 }
 
 /**
@@ -148,4 +150,5 @@ export const DEFAULT_CONFIG: Required<SQLWorkbenchConfig> = {
   duckdbVersion: '1.31.1-dev1.0',
   duckdbCDN: 'https://cdn.jsdelivr.net/npm/@duckdb/duckdb-wasm',
   editable: true,
+  showOpenButton: true,
 };
