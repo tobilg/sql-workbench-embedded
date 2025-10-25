@@ -1,6 +1,6 @@
-# SQL Workbench Embed Test Suite
+# SQL Workbench Embedded Test Suite
 
-Comprehensive test suite for the SQL Workbench Embed library using Vitest.
+Comprehensive test suite for the SQL Workbench Embedded library using Vitest.
 
 ## Test Structure
 
@@ -12,7 +12,7 @@ src/__tests__/
 ├── syntax-highlight.test.ts   # SQL syntax highlighting tests
 ├── styles.test.ts             # Theme and styling tests
 ├── duckdb-manager.test.ts     # DuckDB manager tests
-├── embed.test.ts              # Main Embed class tests
+├── embedded.test.ts           # Main Embedded class tests
 └── index.test.ts              # Public API and initialization tests
 ```
 
@@ -44,7 +44,7 @@ npx vitest run path-resolver.test.ts
 npx vitest run --grep "theme"
 
 # Run tests in a specific file with watch mode
-npx vitest watch embed.test.ts
+npx vitest watch embedded.test.ts
 
 # Update snapshots
 npx vitest run -u
@@ -111,7 +111,7 @@ The test suite provides comprehensive coverage for all major components:
 - ⚠️ Worker blob creation (partially mocked)
 - ⚠️ Real DuckDB integration (mocked in tests)
 
-### 5. Embed Component (`embed.test.ts`)
+### 5. Embedded Component (`embedded.test.ts`)
 **Coverage: ~98%**
 
 - ✅ UI creation and structure
@@ -274,7 +274,7 @@ beforeEach(() => {
 ### Running Single Test
 ```bash
 # Run specific test file
-npx vitest run embed.test.ts
+npx vitest run embedded.test.ts
 
 # Run specific test case
 npx vitest run --grep "should create embed"

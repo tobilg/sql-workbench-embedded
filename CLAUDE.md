@@ -111,9 +111,9 @@ window.SQLWorkbench.init();
 window.SQLWorkbench.destroy();
 
 // Per-instance
-new window.SQLWorkbench.Embed(element, options);
-embed.run();
-embed.destroy();
+new window.SQLWorkbench.Embedded(element, options);
+embedded.run();
+embedded.destroy();
 ```
 
 ## Framework Integration Patterns

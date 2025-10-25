@@ -1,17 +1,17 @@
 /**
- * SQL Workbench Embed class
+ * SQL Workbench Embedded class
  * Main class for creating interactive SQL embeds
  */
 
-import { EmbedOptions, EmbedState, QueryResult, DEFAULT_CONFIG } from './types';
+import { EmbeddedOptions, EmbeddedState, QueryResult, DEFAULT_CONFIG } from './types';
 import { highlightSQL, debounce } from './syntax-highlight';
 import { resolvePathsInSQL } from './path-resolver';
 import { duckDBManager } from './duckdb-manager';
 import { getThemeConfig, applyThemeConfig } from './styles';
 
-export class Embed {
+export class Embedded {
   private element: HTMLElement;
-  private options: Required<EmbedOptions>;
+  private options: Required<EmbeddedOptions>;
   private container: HTMLElement | null = null;
   private editorElement: HTMLDivElement | null = null;
   private outputElement: HTMLDivElement | null = null;
@@ -19,10 +19,10 @@ export class Embed {
   private resetButton: HTMLButtonElement | null = null;
   private openButton: HTMLButtonElement | null = null;
   private initialCode: string;
-  private state: EmbedState = 'idle';
+  private state: EmbeddedState = 'idle';
   private destroyed = false;
 
-  constructor(element: HTMLElement, options: Partial<EmbedOptions> = {}) {
+  constructor(element: HTMLElement, options: Partial<EmbeddedOptions> = {}) {
     this.element = element;
     
     // Extract theme from data-theme attribute if present
@@ -451,7 +451,7 @@ export class Embed {
   /**
    * Set embed state
    */
-  private setState(state: EmbedState): void {
+  private setState(state: EmbeddedState): void {
     this.state = state;
 
     // Update button states

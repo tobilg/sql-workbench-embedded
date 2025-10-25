@@ -27,9 +27,9 @@ describe('index (main entry point)', () => {
   });
 
   describe('SQLWorkbench export', () => {
-    it('should export Embed class', () => {
-      expect(SQLWorkbench.Embed).toBeDefined();
-      expect(typeof SQLWorkbench.Embed).toBe('function');
+    it('should export Embedded class', () => {
+      expect(SQLWorkbench.Embedded).toBeDefined();
+      expect(typeof SQLWorkbench.Embedded).toBe('function');
     });
 
     it('should export init function', () => {
@@ -59,8 +59,8 @@ describe('index (main entry point)', () => {
       expect((window as any).SQLWorkbench).toBe(SQLWorkbench);
     });
 
-    it('should make Embed accessible via window.SQLWorkbench.Embed', () => {
-      expect((window as any).SQLWorkbench.Embed).toBe(SQLWorkbench.Embed);
+    it('should make Embedded accessible via window.SQLWorkbench.Embedded', () => {
+      expect((window as any).SQLWorkbench.Embedded).toBe(SQLWorkbench.Embedded);
     });
   });
 
@@ -404,7 +404,7 @@ describe('index (main entry point)', () => {
   describe('Embed class direct usage', () => {
     it('should allow creating embeds directly', () => {
       const element = createSQLElement('SELECT 1');
-      const embed = new SQLWorkbench.Embed(element);
+      const embed = new SQLWorkbench.Embedded(element);
 
       expect(embed).toBeTruthy();
       expect(embed.getContainer()).toBeTruthy();
@@ -412,7 +412,7 @@ describe('index (main entry point)', () => {
 
     it('should allow destroying embeds created directly', () => {
       const element = createSQLElement('SELECT 1');
-      const embed = new SQLWorkbench.Embed(element);
+      const embed = new SQLWorkbench.Embedded(element);
       const container = embed.getContainer();
 
       embed.destroy();
@@ -432,7 +432,7 @@ describe('index (main entry point)', () => {
       });
 
       const element = createSQLElement('SELECT 42');
-      const embed = new SQLWorkbench.Embed(element);
+      const embed = new SQLWorkbench.Embedded(element);
 
       await embed.run();
 

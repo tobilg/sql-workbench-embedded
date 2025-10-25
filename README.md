@@ -127,7 +127,7 @@ SQLWorkbench.config({
 SQLWorkbench.init();
 
 // Or create a single embed programmatically
-const embed = new SQLWorkbench.Embed(element, {
+const embed = new SQLWorkbench.Embedded(element, {
   editable: true,
   theme: 'light',
 });
@@ -154,7 +154,7 @@ const embed = new SQLWorkbench.Embed(element, {
   SQLWorkbench.init();
 
   // Or create a single embed programmatically
-  const embed = new SQLWorkbench.Embed(element, {
+  const embed = new SQLWorkbench.Embedded(element, {
     editable: true,
     theme: 'light',
   });
@@ -181,7 +181,7 @@ SQLWorkbench.config({
 ### Per-Instance Options
 
 ```javascript
-const embed = new SQLWorkbench.Embed(element, {
+const embed = new SQLWorkbench.Embedded(element, {
   initialCode: 'SELECT 1;',
   theme: 'dark',
   editable: false,
@@ -193,7 +193,7 @@ const embed = new SQLWorkbench.Embed(element, {
 
 Themes are resolved in the following priority order (highest to lowest):
 
-1. **Per-instance options** - `new Embed(element, { theme: 'dark' })`
+1. **Per-instance options** - `new Embedded(element, { theme: 'dark' })`
 2. **HTML `data-theme` attribute** - `<pre data-theme="ocean">`
 3. **Global configuration** - `SQLWorkbench.config({ theme: 'auto' })`
 
@@ -247,7 +247,7 @@ SQLWorkbench.config({
 });
 
 // Use custom themes
-new SQLWorkbench.Embed(element, {
+new SQLWorkbench.Embedded(element, {
   theme: 'ocean'  // or 'sunset'
 });
 ```
@@ -387,7 +387,7 @@ SQLWorkbench.config({
 Or for a specific instance:
 
 ```javascript
-const embed = new SQLWorkbench.Embed(element, {
+const embed = new SQLWorkbench.Embedded(element, {
   showOpenButton: false,
 });
 ```
@@ -413,12 +413,12 @@ Destroy all embeds and cleanup resources.
 
 Set global configuration options.
 
-### SQLWorkbench.Embed
+### SQLWorkbench.Embedded
 
 Class for creating individual embeds.
 
 ```javascript
-const embed = new SQLWorkbench.Embed(element, options);
+const embed = new SQLWorkbench.Embedded(element, options);
 
 // Methods
 embed.run();  // Execute query
@@ -448,7 +448,7 @@ function SQLEmbed({ code, options }) {
       containerRef.current.appendChild(preElement);
 
       // Initialize the embed
-      embedRef.current = new window.SQLWorkbench.Embed(preElement, options);
+      embedRef.current = new window.SQLWorkbench.Embeddedded(preElement, options);
     }
 
     return () => {
@@ -488,7 +488,7 @@ export default {
         containerRef.value.appendChild(preElement);
 
         // Initialize the embed
-        embedRef.value = new window.SQLWorkbench.Embed(preElement, props.options);
+        embedRef.value = new window.SQLWorkbench.Embeddedded(preElement, props.options);
       }
     });
 
@@ -521,7 +521,7 @@ export default {
       element.innerHTML = `<code>${this.code}</code>`;
       this.$refs.container.appendChild(element);
 
-      this.embed = new window.SQLWorkbench.Embed(element, this.options);
+      this.embed = new window.SQLWorkbench.Embeddedded(element, this.options);
     }
   },
   beforeUnmount() {
@@ -568,7 +568,7 @@ Requires: WebAssembly, Web Workers, ES2018+
 ```
 src/
 ├── index.ts              # Main entry point
-├── embed.ts              # Core Embed class
+├── embedded.ts           # Core Embedded class
 ├── types.ts              # TypeScript definitions
 ├── duckdb-manager.ts     # DuckDB connection management
 ├── path-resolver.ts      # File path resolution

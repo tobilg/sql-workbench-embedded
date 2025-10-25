@@ -3,14 +3,14 @@
  * Main entry point
  */
 
-import { Embed } from './embed';
+import { Embedded } from './embedded';
 import { SQLWorkbenchConfig, DEFAULT_CONFIG } from './types';
 import { injectStyles } from './styles';
 import { duckDBManager } from './duckdb-manager';
 
-// Track all embed instances
-const embedInstances = new WeakMap<HTMLElement, Embed>();
-const allEmbeds: Embed[] = [];
+// Track all embedded instances
+const embedInstances = new WeakMap<HTMLElement, Embedded>();
+const allEmbeds: Embedded[] = [];
 
 // Global configuration
 let globalConfig: Required<SQLWorkbenchConfig> = { ...DEFAULT_CONFIG };
@@ -50,10 +50,10 @@ function init(): void {
       return;
     }
 
-    // Create embed - don't pass theme from globalConfig, let it be extracted from data-theme
+    // Create embedded - don't pass theme from globalConfig, let it be extracted from data-theme
     // But DO pass customThemes so custom themes can be resolved
     const { theme: _ignoredTheme, ...configWithoutTheme } = globalConfig;
-    const embed = new Embed(element, configWithoutTheme);
+    const embed = new Embedded(element, configWithoutTheme);
     const container = embed.getContainer();
 
     if (container) {
@@ -143,7 +143,7 @@ if (typeof document !== 'undefined') {
 
 // Export public API
 export const SQLWorkbench = {
-  Embed,
+  Embedded,
   init,
   destroy,
   config,
@@ -159,5 +159,5 @@ if (typeof window !== 'undefined') {
 export default SQLWorkbench;
 
 // Named exports for tree-shaking
-export { Embed };
-export type { SQLWorkbenchConfig, EmbedOptions, QueryResult } from './types';
+export { Embedded };
+export type { SQLWorkbenchConfig, EmbeddedOptions, QueryResult } from './types';

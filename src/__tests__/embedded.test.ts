@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { Embed } from '../embed';
+import { Embedded } from '../embedded';
 import { duckDBManager } from '../duckdb-manager';
 import {
   createSQLElement,
@@ -12,7 +12,7 @@ import { DEFAULT_CONFIG } from '../types';
 
 vi.mock('../duckdb-manager');
 
-describe('Embed', () => {
+describe('Embedded', () => {
   beforeEach(() => {
     vi.useFakeTimers();
 
@@ -36,7 +36,7 @@ describe('Embed', () => {
   describe('constructor and initialization', () => {
     it('should create embed from <pre><code> structure', () => {
       const element = createSQLElement('SELECT 1');
-      const embed = new Embed(element);
+      const embed = new Embedded(element);
 
       const container = embed.getContainer();
       expect(container).toBeTruthy();
@@ -45,7 +45,7 @@ describe('Embed', () => {
 
     it('should create embed from simple <pre> element', () => {
       const element = createSimpleSQLElement('SELECT 1');
-      const embed = new Embed(element);
+      const embed = new Embedded(element);
 
       const container = embed.getContainer();
       expect(container).toBeTruthy();
@@ -54,7 +54,7 @@ describe('Embed', () => {
     it('should extract initial code from <code> element', () => {
       const sql = 'SELECT * FROM users';
       const element = createSQLElement(sql);
-      const embed = new Embed(element);
+      const embed = new Embedded(element);
 
       const editor = embed.getContainer()?.querySelector('.sql-workbench-editor');
       expect(editor?.textContent).toContain('SELECT');
@@ -62,7 +62,7 @@ describe('Embed', () => {
 
     it('should use initialCode option when provided', () => {
       const element = createSQLElement('SELECT 1');
-      const embed = new Embed(element, { initialCode: 'SELECT 42' });
+      const embed = new Embedded(element, { initialCode: 'SELECT 42' });
 
       const editor = embed.getContainer()?.querySelector('.sql-workbench-editor');
       expect(editor?.textContent).toContain('42');
@@ -70,7 +70,7 @@ describe('Embed', () => {
 
     it('should merge options with defaults', () => {
       const element = createSQLElement('SELECT 1');
-      const embed = new Embed(element, { baseUrl: 'https://custom.com' });
+      const embed = new Embedded(element, { baseUrl: 'https://custom.com' });
 
       expect((embed as any).options.baseUrl).toBe('https://custom.com');
       expect((embed as any).options.theme).toBe(DEFAULT_CONFIG.theme);
@@ -80,7 +80,7 @@ describe('Embed', () => {
     it('should respect data-theme attribute', () => {
       const element = createSQLElement('SELECT 1');
       element.setAttribute('data-theme', 'dark');
-      const embed = new Embed(element);
+      const embed = new Embedded(element);
 
       const container = embed.getContainer();
       expect(container?.getAttribute('data-theme')).toBe('dark');
@@ -89,7 +89,7 @@ describe('Embed', () => {
     it('should prioritize options.theme over data-theme attribute', () => {
       const element = createSQLElement('SELECT 1');
       element.setAttribute('data-theme', 'dark');
-      const embed = new Embed(element, { theme: 'light' });
+      const embed = new Embedded(element, { theme: 'light' });
 
       const container = embed.getContainer();
       expect(container?.getAttribute('data-theme')).toBe('light');
@@ -99,7 +99,7 @@ describe('Embed', () => {
   describe('UI creation', () => {
     it('should create all required UI elements', () => {
       const element = createSQLElement('SELECT 1');
-      const embed = new Embed(element);
+      const embed = new Embedded(element);
       const container = embed.getContainer();
 
       expect(container?.querySelector('.sql-workbench-editor')).toBeTruthy();
@@ -110,7 +110,7 @@ describe('Embed', () => {
 
     it('should create Run button with correct attributes', () => {
       const element = createSQLElement('SELECT 1');
-      const embed = new Embed(element);
+      const embed = new Embedded(element);
       const runButton = embed.getContainer()?.querySelector('.sql-workbench-button-primary');
 
       expect(runButton?.textContent).toBe('Run');
@@ -119,7 +119,7 @@ describe('Embed', () => {
 
     it('should create Reset button initially hidden', () => {
       const element = createSQLElement('SELECT 1');
-      const embed = new Embed(element);
+      const embed = new Embedded(element);
       const resetButton = embed.getContainer()?.querySelector('.sql-workbench-button-reset');
 
       expect(resetButton?.classList.contains('sql-workbench-button-hidden')).toBe(true);
@@ -127,7 +127,7 @@ describe('Embed', () => {
 
     it('should create Open button by default', () => {
       const element = createSQLElement('SELECT 1');
-      const embed = new Embed(element);
+      const embed = new Embedded(element);
       const openButton = embed.getContainer()?.querySelector('.sql-workbench-button-open');
 
       expect(openButton).toBeTruthy();
@@ -136,7 +136,7 @@ describe('Embed', () => {
 
     it('should not create Open button when showOpenButton is false', () => {
       const element = createSQLElement('SELECT 1');
-      const embed = new Embed(element, { showOpenButton: false });
+      const embed = new Embedded(element, { showOpenButton: false });
       const openButton = embed.getContainer()?.querySelector('.sql-workbench-button-open');
 
       expect(openButton).toBeFalsy();
@@ -144,7 +144,7 @@ describe('Embed', () => {
 
     it('should create editor with correct attributes', () => {
       const element = createSQLElement('SELECT 1');
-      const embed = new Embed(element);
+      const embed = new Embedded(element);
       const editor = embed.getContainer()?.querySelector('.sql-workbench-editor') as HTMLElement;
 
       expect(editor?.getAttribute('role')).toBe('textbox');
@@ -155,7 +155,7 @@ describe('Embed', () => {
 
     it('should create output area with accessibility attributes', () => {
       const element = createSQLElement('SELECT 1');
-      const embed = new Embed(element);
+      const embed = new Embedded(element);
       const output = embed.getContainer()?.querySelector('.sql-workbench-output');
 
       expect(output?.getAttribute('role')).toBe('region');
@@ -165,7 +165,7 @@ describe('Embed', () => {
 
     it('should make editor editable when editable option is true', () => {
       const element = createSQLElement('SELECT 1');
-      const embed = new Embed(element, { editable: true });
+      const embed = new Embedded(element, { editable: true });
       const editor = embed.getContainer()?.querySelector('.sql-workbench-editor') as HTMLElement;
 
       expect(editor?.contentEditable).toBe('true');
@@ -173,7 +173,7 @@ describe('Embed', () => {
 
     it('should make editor non-editable when editable option is false', () => {
       const element = createSQLElement('SELECT 1');
-      const embed = new Embed(element, { editable: false });
+      const embed = new Embedded(element, { editable: false });
       const editor = embed.getContainer()?.querySelector('.sql-workbench-editor') as HTMLElement;
 
       expect(editor?.contentEditable).toBe('false');
@@ -182,7 +182,7 @@ describe('Embed', () => {
     it('should replace original element with container', () => {
       const element = createSQLElement('SELECT 1');
       const parent = element.parentNode;
-      const embed = new Embed(element);
+      const embed = new Embedded(element);
 
       expect(parent?.contains(element)).toBe(false);
       expect(parent?.contains(embed.getContainer()!)).toBe(true);
@@ -192,14 +192,14 @@ describe('Embed', () => {
   describe('theme resolution', () => {
     it('should use light theme when specified', () => {
       const element = createSQLElement('SELECT 1');
-      const embed = new Embed(element, { theme: 'light' });
+      const embed = new Embedded(element, { theme: 'light' });
 
       expect(embed.getContainer()?.getAttribute('data-theme')).toBe('light');
     });
 
     it('should use dark theme when specified', () => {
       const element = createSQLElement('SELECT 1');
-      const embed = new Embed(element, { theme: 'dark' });
+      const embed = new Embedded(element, { theme: 'dark' });
 
       expect(embed.getContainer()?.getAttribute('data-theme')).toBe('dark');
     });
@@ -207,7 +207,7 @@ describe('Embed', () => {
     it('should auto-detect dark theme from system preference', () => {
       mockSystemTheme('dark');
       const element = createSQLElement('SELECT 1');
-      const embed = new Embed(element, { theme: 'auto' });
+      const embed = new Embedded(element, { theme: 'auto' });
 
       expect(embed.getContainer()?.getAttribute('data-theme')).toBe('dark');
     });
@@ -215,7 +215,7 @@ describe('Embed', () => {
     it('should auto-detect light theme from system preference', () => {
       mockSystemTheme('light');
       const element = createSQLElement('SELECT 1');
-      const embed = new Embed(element, { theme: 'auto' });
+      const embed = new Embedded(element, { theme: 'auto' });
 
       expect(embed.getContainer()?.getAttribute('data-theme')).toBe('light');
     });
@@ -228,7 +228,7 @@ describe('Embed', () => {
           config: { bgColor: '#f0f0f0' },
         },
       };
-      const embed = new Embed(element, { theme: 'myTheme', customThemes });
+      const embed = new Embedded(element, { theme: 'myTheme', customThemes });
 
       expect(embed.getContainer()?.getAttribute('data-theme')).toBe('myTheme');
     });
@@ -236,7 +236,7 @@ describe('Embed', () => {
     it('should fall back to light theme on custom theme error', () => {
       const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
       const element = createSQLElement('SELECT 1');
-      const embed = new Embed(element, { theme: 'nonexistent' });
+      const embed = new Embedded(element, { theme: 'nonexistent' });
 
       expect(embed.getContainer()?.getAttribute('data-theme')).toBe('light');
       expect(consoleWarnSpy).toHaveBeenCalled();
@@ -248,7 +248,7 @@ describe('Embed', () => {
     it('should run query on Ctrl+Enter', async () => {
       vi.useRealTimers(); // Use real timers for async operations
       const element = createSQLElement('SELECT 1');
-      const embed = new Embed(element);
+      const embed = new Embedded(element);
       const editor = embed.getContainer()?.querySelector('.sql-workbench-editor') as HTMLElement;
 
       simulateKeyPress(editor, 'Enter', { ctrlKey: true });
@@ -263,7 +263,7 @@ describe('Embed', () => {
     it('should run query on Cmd+Enter (Mac)', async () => {
       vi.useRealTimers(); // Use real timers for async operations
       const element = createSQLElement('SELECT 1');
-      const embed = new Embed(element);
+      const embed = new Embedded(element);
       const editor = embed.getContainer()?.querySelector('.sql-workbench-editor') as HTMLElement;
 
       simulateKeyPress(editor, 'Enter', { metaKey: true });
@@ -276,7 +276,7 @@ describe('Embed', () => {
 
     it('should reset on Ctrl+Backspace', () => {
       const element = createSQLElement('SELECT 1');
-      const embed = new Embed(element);
+      const embed = new Embedded(element);
       const editor = embed.getContainer()?.querySelector('.sql-workbench-editor') as HTMLElement;
 
       // Change code first
@@ -291,7 +291,7 @@ describe('Embed', () => {
 
     it('should open in SQL Workbench on Ctrl+Shift+Enter', () => {
       const element = createSQLElement('SELECT 1');
-      const embed = new Embed(element);
+      const embed = new Embedded(element);
       const editor = embed.getContainer()?.querySelector('.sql-workbench-editor') as HTMLElement;
 
       const windowOpenSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
@@ -310,7 +310,7 @@ describe('Embed', () => {
 
     it('should open in SQL Workbench on Cmd+Shift+Enter (Mac)', () => {
       const element = createSQLElement('SELECT 1');
-      const embed = new Embed(element);
+      const embed = new Embedded(element);
       const editor = embed.getContainer()?.querySelector('.sql-workbench-editor') as HTMLElement;
 
       const windowOpenSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
@@ -333,7 +333,7 @@ describe('Embed', () => {
     it('should execute SQL query', async () => {
       vi.useRealTimers(); // Use real timers for async operations
       const element = createSQLElement('SELECT 1');
-      const embed = new Embed(element);
+      const embed = new Embedded(element);
 
       await embed.run();
 
@@ -349,7 +349,7 @@ describe('Embed', () => {
     it('should configure DuckDB before first query', async () => {
       vi.useRealTimers();
       const element = createSQLElement('SELECT 1');
-      const embed = new Embed(element, {
+      const embed = new Embedded(element, {
         duckdbVersion: '1.30.0',
         duckdbCDN: 'https://custom-cdn.com',
       });
@@ -367,7 +367,7 @@ describe('Embed', () => {
       vi.useRealTimers();
       const sql = "SELECT * FROM 'data.parquet'";
       const element = createSQLElement(sql);
-      const embed = new Embed(element, {
+      const embed = new Embedded(element, {
         baseUrl: 'https://data.example.com',
       });
 
@@ -383,7 +383,7 @@ describe('Embed', () => {
     it('should show loading state during query execution', async () => {
       vi.useRealTimers();
       const element = createSQLElement('SELECT 1');
-      const embed = new Embed(element);
+      const embed = new Embedded(element);
 
       const runPromise = embed.run();
 
@@ -399,7 +399,7 @@ describe('Embed', () => {
     it('should display results in table format', async () => {
       vi.useRealTimers();
       const element = createSQLElement('SELECT 1');
-      const embed = new Embed(element);
+      const embed = new Embedded(element);
 
       await embed.run();
 
@@ -413,7 +413,7 @@ describe('Embed', () => {
     it('should display execution metadata', async () => {
       vi.useRealTimers();
       const element = createSQLElement('SELECT 1');
-      const embed = new Embed(element);
+      const embed = new Embedded(element);
 
       await embed.run();
 
@@ -434,7 +434,7 @@ describe('Embed', () => {
       });
 
       const element = createSQLElement('SELECT 1 WHERE FALSE');
-      const embed = new Embed(element);
+      const embed = new Embedded(element);
 
       await embed.run();
 
@@ -448,7 +448,7 @@ describe('Embed', () => {
       vi.mocked(duckDBManager.query).mockRejectedValueOnce(new Error('Syntax error'));
 
       const element = createSQLElement('SELECT * FROM invalid');
-      const embed = new Embed(element);
+      const embed = new Embedded(element);
 
       await embed.run();
 
@@ -464,7 +464,7 @@ describe('Embed', () => {
       );
 
       const element = createSQLElement('SELECT 1');
-      const embed = new Embed(element);
+      const embed = new Embedded(element);
 
       await embed.run();
 
@@ -484,7 +484,7 @@ describe('Embed', () => {
       });
 
       const element = createSQLElement('SELECT 1');
-      const embed = new Embed(element);
+      const embed = new Embedded(element);
 
       await embed.run();
 
@@ -497,7 +497,7 @@ describe('Embed', () => {
     it('should disable buttons during query execution', async () => {
       vi.useRealTimers();
       const element = createSQLElement('SELECT 1');
-      const embed = new Embed(element);
+      const embed = new Embedded(element);
 
       const runPromise = embed.run();
 
@@ -517,7 +517,7 @@ describe('Embed', () => {
     it('should show reset button after first query', async () => {
       vi.useRealTimers();
       const element = createSQLElement('SELECT 1');
-      const embed = new Embed(element);
+      const embed = new Embedded(element);
 
       const resetButton = embed.getContainer()?.querySelector('.sql-workbench-button-reset');
       expect(resetButton?.classList.contains('sql-workbench-button-hidden')).toBe(true);
@@ -542,7 +542,7 @@ describe('Embed', () => {
       });
 
       const element = createSQLElement('SELECT 1');
-      const embed = new Embed(element);
+      const embed = new Embedded(element);
 
       const startTime = Date.now();
       await embed.run();
@@ -555,7 +555,7 @@ describe('Embed', () => {
     it('should not run query when already loading', async () => {
       vi.useRealTimers();
       const element = createSQLElement('SELECT 1');
-      const embed = new Embed(element);
+      const embed = new Embedded(element);
 
       const run1 = embed.run();
       const run2 = embed.run();
@@ -568,7 +568,7 @@ describe('Embed', () => {
 
     it('should show error for empty query', async () => {
       const element = createSQLElement('   ');
-      const embed = new Embed(element);
+      const embed = new Embedded(element);
 
       await embed.run();
 
@@ -580,7 +580,7 @@ describe('Embed', () => {
   describe('reset method', () => {
     it('should restore initial code', () => {
       const element = createSQLElement('SELECT 1');
-      const embed = new Embed(element);
+      const embed = new Embedded(element);
       const editor = embed.getContainer()?.querySelector('.sql-workbench-editor') as HTMLElement;
 
       editor.textContent = 'SELECT 42';
@@ -594,7 +594,7 @@ describe('Embed', () => {
     it('should clear output area', async () => {
       vi.useRealTimers();
       const element = createSQLElement('SELECT 1');
-      const embed = new Embed(element);
+      const embed = new Embedded(element);
 
       await embed.run();
 
@@ -609,7 +609,7 @@ describe('Embed', () => {
     it('should hide reset button', async () => {
       vi.useRealTimers();
       const element = createSQLElement('SELECT 1');
-      const embed = new Embed(element);
+      const embed = new Embedded(element);
 
       await embed.run();
 
@@ -626,7 +626,7 @@ describe('Embed', () => {
   describe('destroy method', () => {
     it('should remove container from DOM', () => {
       const element = createSQLElement('SELECT 1');
-      const embed = new Embed(element);
+      const embed = new Embedded(element);
       const container = embed.getContainer();
 
       embed.destroy();
@@ -636,7 +636,7 @@ describe('Embed', () => {
 
     it('should mark embed as destroyed', () => {
       const element = createSQLElement('SELECT 1');
-      const embed = new Embed(element);
+      const embed = new Embedded(element);
 
       expect(embed.isDestroyed()).toBe(false);
 
@@ -647,7 +647,7 @@ describe('Embed', () => {
 
     it('should clear internal references', () => {
       const element = createSQLElement('SELECT 1');
-      const embed = new Embed(element);
+      const embed = new Embedded(element);
 
       embed.destroy();
 
@@ -656,7 +656,7 @@ describe('Embed', () => {
 
     it('should be safe to call multiple times', () => {
       const element = createSQLElement('SELECT 1');
-      const embed = new Embed(element);
+      const embed = new Embedded(element);
 
       embed.destroy();
       embed.destroy();
@@ -669,7 +669,7 @@ describe('Embed', () => {
   describe('syntax highlighting', () => {
     it('should apply syntax highlighting to initial code', () => {
       const element = createSQLElement('SELECT * FROM users');
-      const embed = new Embed(element);
+      const embed = new Embedded(element);
       const editor = embed.getContainer()?.querySelector('.sql-workbench-editor');
 
       expect(editor?.innerHTML).toContain('sql-keyword');
@@ -677,7 +677,7 @@ describe('Embed', () => {
 
     it('should update highlighting on input (debounced)', async () => {
       const element = createSQLElement('SELECT 1');
-      const embed = new Embed(element);
+      const embed = new Embedded(element);
       const editor = embed.getContainer()?.querySelector('.sql-workbench-editor') as HTMLElement;
 
       editor.textContent = 'SELECT * FROM users';

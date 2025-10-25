@@ -103,9 +103,9 @@ export interface SQLWorkbenchConfig {
 }
 
 /**
- * Per-instance embed options
+ * Per-instance embedded options
  */
-export interface EmbedOptions extends SQLWorkbenchConfig {
+export interface EmbeddedOptions extends SQLWorkbenchConfig {
   /** Initial SQL code (if not extracted from element) */
   initialCode?: string;
 }
@@ -134,9 +134,9 @@ export interface DuckDBConnection {
 }
 
 /**
- * UI state for embed
+ * UI state for embedded
  */
-export type EmbedState = 'idle' | 'loading' | 'success' | 'error';
+export type EmbeddedState = 'idle' | 'loading' | 'success' | 'error';
 
 /**
  * Default configuration values

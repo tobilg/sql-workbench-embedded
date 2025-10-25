@@ -165,8 +165,8 @@
             preElement.innerHTML = `<code>${props.code}</code>`;
             containerRef.value.appendChild(preElement);
             
-            // Initialize the embed
-            embedRef.value = new window.SQLWorkbench.Embed(preElement, {
+            // Initialize the embedded
+            embedRef.value = new window.SQLWorkbench.Embedded(preElement, {
               editable: true,
               theme: 'light'
             });
