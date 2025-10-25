@@ -3,10 +3,24 @@
   "version": "0.1.0",
   "description": "Lightweight JavaScript library that transforms static SQL code blocks into interactive, browser-based SQL execution environments using DuckDB WASM",
   "main": "dist/sql-workbench-embedded.js",
+  "browser": "dist/sql-workbench-embedded.js",
   "module": "dist/sql-workbench-embedded.esm.js",
   "types": "dist/index.d.ts",
+  "unpkg": "dist/sql-workbench-embedded.js",
+  "jsdelivr": "dist/sql-workbench-embedded.js",
+  "exports": {
+    ".": {
+      "import": "./dist/sql-workbench-embedded.esm.js",
+      "require": "./dist/sql-workbench-embedded.js",
+      "script": "./dist/sql-workbench-embedded.js",
+      "default": "./dist/sql-workbench-embedded.js"
+    },
+    "./package.json": "./package.json"
+  },
   "files": [
-    "dist"
+    "dist/",
+    "README.md",
+    "LICENSE"
   ],
   "scripts": {
     "dev": "vite",
@@ -15,17 +29,24 @@
     "copy:example": "cp examples/index.html dist/ && sed -i.bak 's|../src/index.ts|../sql-workbench-embedded.esm.js|' dist/index.html && rm -f dist/index.html.bak",
     "preview": "vite preview",
     "preview:prod": "npm run build:prod && vite preview",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "prepublishOnly": "npm run build:prod"
   },
   "keywords": [
     "sql",
     "duckdb",
     "wasm",
     "embed",
+    "embedded",
+    "embeddable",
     "interactive",
     "sql-editor",
+    "sql-workbench",
     "documentation",
-    "tutorial"
+    "tutorial",
+    "education",
+    "queries",
+    "in-browser"
   ],
   "author": "TobiLG <tobilg@gmail.com>",
   "license": "MIT",
