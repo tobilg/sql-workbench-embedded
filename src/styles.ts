@@ -1,9 +1,9 @@
-import { ThemeColors, CustomTheme } from './types';
+import { ThemeConfig, CustomTheme } from './types';
 
 /**
  * Light theme variables (VS Code Light+ theme)
  */
-export const LIGHT_THEME_COLORS: ThemeColors = {
+export const LIGHT_THEME_CONFIG: ThemeConfig = {
   bgColor: '#ffffff',
   textColor: '#333333',
   borderColor: '#e5e5e5',
@@ -30,12 +30,18 @@ export const LIGHT_THEME_COLORS: ThemeColors = {
   syntaxComment: '#008000',
   syntaxFunction: '#795e26',
   syntaxOperator: '#000000',
+  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif',
+  editorFontFamily: '"Monaco", "Menlo", "Ubuntu Mono", "Consolas", monospace',
+  fontSize: '14px',
+  editorFontSize: '14px',
+  buttonFontSize: '14px',
+  metadataFontSize: '12px',
 };
 
 /**
  * Dark theme variables (VS Code Dark+ theme)
  */
-export const DARK_THEME_COLORS: ThemeColors = {
+export const DARK_THEME_CONFIG: ThemeConfig = {
   bgColor: '#252526',
   textColor: '#d4d4d4',
   borderColor: '#3e3e42',
@@ -62,12 +68,18 @@ export const DARK_THEME_COLORS: ThemeColors = {
   syntaxComment: '#6a9955',
   syntaxFunction: '#dcdcaa',
   syntaxOperator: '#d4d4d4',
+  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif',
+  editorFontFamily: '"Monaco", "Menlo", "Ubuntu Mono", "Consolas", monospace',
+  fontSize: '14px',
+  editorFontSize: '14px',
+  buttonFontSize: '14px',
+  metadataFontSize: '12px',
 };
 
 /**
  * Required theme variable keys
  */
-const REQUIRED_THEME_KEYS: (keyof ThemeColors)[] = [
+const REQUIRED_THEME_KEYS: (keyof ThemeConfig)[] = [
   'bgColor', 'textColor', 'borderColor', 'editorBg', 'editorText', 'editorFocusBg',
   'controlsBg', 'primaryBg', 'primaryText', 'primaryHover', 'secondaryBg',
   'secondaryText', 'secondaryHover', 'mutedText', 'errorText', 'errorBg',
@@ -77,7 +89,7 @@ const REQUIRED_THEME_KEYS: (keyof ThemeColors)[] = [
 /**
  * Validate that all required theme variables are present
  */
-export function validateThemeColors(variables: Partial<ThemeColors>): void {
+export function validateThemeColors(variables: Partial<ThemeConfig>): void {
   const missing = REQUIRED_THEME_KEYS.filter(key => !(key in variables));
   if (missing.length > 0) {
     throw new Error(`Missing required theme variables: ${missing.join(', ')}`);
@@ -87,16 +99,16 @@ export function validateThemeColors(variables: Partial<ThemeColors>): void {
 /**
  * Get theme variables for a given theme name
  */
-export function getThemeColors(
+export function getThemeConfig(
   themeName: string,
   customThemes: Record<string, CustomTheme> = {}
-): ThemeColors {
+): ThemeConfig {
   // Handle built-in themes
   if (themeName === 'light') {
-    return LIGHT_THEME_COLORS;
+    return LIGHT_THEME_CONFIG;
   }
   if (themeName === 'dark') {
-    return DARK_THEME_COLORS;
+    return DARK_THEME_CONFIG;
   }
 
   // Handle custom themes
@@ -107,19 +119,19 @@ export function getThemeColors(
 
   // If theme extends a base theme, merge with it
   if (customTheme.extends) {
-    const baseTheme = customTheme.extends === 'light' ? LIGHT_THEME_COLORS : DARK_THEME_COLORS;
-    return { ...baseTheme, ...customTheme.colors };
+    const baseTheme = customTheme.extends === 'light' ? LIGHT_THEME_CONFIG : DARK_THEME_CONFIG;
+    return { ...baseTheme, ...customTheme.config };
   }
 
   // If no extends, validate all variables are present
-  validateThemeColors(customTheme.colors);
-  return customTheme.colors as ThemeColors;
+  validateThemeColors(customTheme.config);
+  return customTheme.config as ThemeConfig;
 }
 
 /**
  * Apply theme variables to a container element
  */
-export function applyThemeColors(container: HTMLElement, variables: ThemeColors): void {
+export function applyThemeConfig(container: HTMLElement, variables: ThemeConfig): void {
   container.style.setProperty('--sw-bg-color', variables.bgColor);
   container.style.setProperty('--sw-text-color', variables.textColor);
   container.style.setProperty('--sw-border-color', variables.borderColor);
@@ -140,7 +152,7 @@ export function applyThemeColors(container: HTMLElement, variables: ThemeColors)
   container.style.setProperty('--sw-table-header-bg', variables.tableHeaderBg);
   container.style.setProperty('--sw-table-header-text', variables.tableHeaderText);
   container.style.setProperty('--sw-table-hover', variables.tableHover);
-  
+
   // Apply syntax highlighting colors if defined
   if (variables.syntaxKeyword) {
     container.style.setProperty('--sw-syntax-keyword', variables.syntaxKeyword);
@@ -160,6 +172,26 @@ export function applyThemeColors(container: HTMLElement, variables: ThemeColors)
   if (variables.syntaxOperator) {
     container.style.setProperty('--sw-syntax-operator', variables.syntaxOperator);
   }
+
+  // Apply typography properties if defined
+  if (variables.fontFamily) {
+    container.style.setProperty('--sw-font-family', variables.fontFamily);
+  }
+  if (variables.editorFontFamily) {
+    container.style.setProperty('--sw-editor-font-family', variables.editorFontFamily);
+  }
+  if (variables.fontSize) {
+    container.style.setProperty('--sw-font-size', variables.fontSize);
+  }
+  if (variables.editorFontSize) {
+    container.style.setProperty('--sw-editor-font-size', variables.editorFontSize);
+  }
+  if (variables.buttonFontSize) {
+    container.style.setProperty('--sw-button-font-size', variables.buttonFontSize);
+  }
+  if (variables.metadataFontSize) {
+    container.style.setProperty('--sw-metadata-font-size', variables.metadataFontSize);
+  }
 }
 
 /**
@@ -168,7 +200,8 @@ export function applyThemeColors(container: HTMLElement, variables: ThemeColors)
  */
 export const CSS_STYLES = `
 .sql-workbench-container {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  font-family: var(--sw-font-family, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif);
+  font-size: var(--sw-font-size, 14px);
   border: 1px solid var(--sw-border-color);
   border-radius: 8px;
   overflow: hidden;
@@ -178,8 +211,8 @@ export const CSS_STYLES = `
 }
 
 .sql-workbench-editor {
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace;
-  font-size: 14px;
+  font-family: var(--sw-editor-font-family, 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace);
+  font-size: var(--sw-editor-font-size, 14px);
   line-height: 1.5;
   padding: 1rem;
   background: var(--sw-editor-bg);
@@ -207,7 +240,7 @@ export const CSS_STYLES = `
 
 .sql-workbench-button {
   padding: 0.5rem 1rem;
-  font-size: 14px;
+  font-size: var(--sw-button-font-size, 14px);
   font-weight: 500;
   border: none;
   border-radius: 4px;
@@ -321,7 +354,7 @@ export const CSS_STYLES = `
   margin-top: 0.5rem;
   padding-top: 0.5rem;
   border-top: 1px solid var(--sw-border-color);
-  font-size: 12px;
+  font-size: var(--sw-metadata-font-size, 12px);
   color: var(--sw-muted-text);
   display: flex;
   gap: 1rem;

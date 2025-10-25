@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SQL Workbench Embed - Typography Customization</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+      background: #f5f5f5;
+    }
+
+    h1 {
+      color: #1f2937;
+      margin-bottom: 0.5rem;
+    }
+
+    .subtitle {
+      color: #6b7280;
+      margin-bottom: 2rem;
+    }
+
+    .example-section {
+      margin-bottom: 3rem;
+    }
+
+    .example-section h2 {
+      color: #1f2937;
+      margin-bottom: 1rem;
+    }
+
+    .example-section p {
+      color: #4b5563;
+      margin-bottom: 1rem;
+    }
+
+    code {
+      background: #f3f4f6;
+      padding: 0.2rem 0.4rem;
+      border-radius: 3px;
+      font-family: 'Monaco', 'Menlo', monospace;
+      font-size: 0.9em;
+    }
+  </style>
+</head>
+<body>
+  <h1>Typography Customization Examples</h1>
+  <p class="subtitle">Demonstrating font-family and font-size customization in themes</p>
+
+  <div class="example-section">
+    <h2>Default Theme</h2>
+    <p>Standard light theme with default typography settings.</p>
+    <pre class="sql-workbench-embedded"><code>SELECT 'Default theme' AS example, 14 AS default_font_size;</code></pre>
+  </div>
+
+  <div class="example-section">
+    <h2>Large Accessible Theme</h2>
+    <p>Larger font sizes for improved accessibility and readability.</p>
+    <pre class="sql-workbench-embedded" data-theme="large-accessible"><code>SELECT
+  'Large accessible theme' AS example,
+  18 AS base_font_size,
+  16 AS editor_font_size,
+  'Great for presentations!' AS use_case;</code></pre>
+  </div>
+
+  <div class="example-section">
+    <h2>Compact Theme</h2>
+    <p>Smaller fonts for displaying more code on screen.</p>
+    <pre class="sql-workbench-embedded" data-theme="compact"><code>SELECT
+  'Compact theme' AS example,
+  12 AS font_size,
+  'Perfect for dense data displays' AS use_case
+FROM generate_series(1, 5) AS t(n);</code></pre>
+  </div>
+
+  <div class="example-section">
+    <h2>Monospace Everything Theme</h2>
+    <p>Using monospace font throughout the entire embed for a unified terminal-like look.</p>
+    <pre class="sql-workbench-embedded" data-theme="mono-all"><code>SELECT
+  'Monospace theme' AS example,
+  'Courier New' AS font_family,
+  'Terminal vibes' AS aesthetic;</code></pre>
+  </div>
+
+  <div class="example-section">
+    <h2>Custom Editor Font Theme</h2>
+    <p>Using Fira Code font family for the editor with ligatures support.</p>
+    <pre class="sql-workbench-embedded" data-theme="fira-code">
+<code>-- This theme uses Fira Code if available
+SELECT
+  'Fira Code theme' AS example,
+  '<=' AS ligature_example_1,
+  '>=' AS ligature_example_2,
+  '!=' AS ligature_example_3;</code>
+</pre>
+  </div>
+
+  <div class="example-section">
+    <h2>Mixed Sizes Theme</h2>
+    <p>Different font sizes for different UI elements.</p>
+    <pre class="sql-workbench-embedded" data-theme="mixed-sizes"><code>SELECT
+  'Mixed sizes theme' AS example,
+  'Large buttons (16px)' AS buttons,
+  'Medium editor (14px)' AS editor,
+  'Small metadata (10px)' AS metadata;</code></pre>
+  </div>
+
+  <script type="module">
+    import { SQLWorkbench } from '../src/index.ts';
+
+    // Configure custom themes with typography customization
+    SQLWorkbench.config({
+      autoInit: false,
+      customThemes: {
+        'large-accessible': {
+          extends: 'light',
+          config: {
+            fontSize: '18px',
+            editorFontSize: '16px',
+            buttonFontSize: '16px',
+            metadataFontSize: '14px',
+          }
+        },
+        'compact': {
+          extends: 'dark',
+          config: {
+            fontSize: '12px',
+            editorFontSize: '12px',
+            buttonFontSize: '12px',
+            metadataFontSize: '10px',
+            fontFamily: 'system-ui, sans-serif',
+          }
+        },
+        'mono-all': {
+          extends: 'light',
+          config: {
+            fontFamily: '"Courier New", Courier, monospace',
+            editorFontFamily: '"Courier New", Courier, monospace',
+            fontSize: '14px',
+            editorFontSize: '14px',
+          }
+        },
+        'fira-code': {
+          extends: 'dark',
+          config: {
+            editorFontFamily: '"Fira Code", "JetBrains Mono", "Monaco", monospace',
+            editorFontSize: '15px',
+          }
+        },
+        'mixed-sizes': {
+          extends: 'light',
+          config: {
+            fontSize: '14px',
+            editorFontSize: '14px',
+            buttonFontSize: '16px',
+            metadataFontSize: '10px',
+          }
+        },
+      }
+    });
+
+    // Initialize all embeds
+    SQLWorkbench.init();
+  </script>
+</body>
+</html>

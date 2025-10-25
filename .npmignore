@@ -1,0 +1,51 @@
+# Source files
+src/
+examples/
+
+# Development files
+*.ts
+!*.d.ts
+tsconfig.json
+vite.config.ts
+vitest.config.ts
+
+# Documentation (keep README.md and LICENSE)
+CLAUDE.md
+requirements/
+
+# Build artifacts (keep dist/)
+node_modules/
+.vite/
+*.log
+
+# Git files
+.git/
+.gitignore
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test files
+*.test.ts
+*.spec.ts
+__tests__/
+coverage/
+
+# Exclude non-essential dist files
+dist/index.html
+dist/*.d.ts.map
+# Exclude internal module type definitions (only keep index.d.ts)
+dist/duckdb-manager.d.ts
+dist/embed.d.ts
+dist/path-resolver.d.ts
+dist/syntax-highlight.d.ts
+dist/styles.d.ts
+dist/types.d.ts
+dist/index.html

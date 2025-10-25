@@ -2,21 +2,26 @@
 
 A lightweight JavaScript library that transforms static SQL code blocks into interactive, browser-based SQL execution environments using DuckDB WASM.
 
+**Repository**: [https://github.com/tobilg/sql-workbench-embedded](https://github.com/tobilg/sql-workbench-embedded)
+
 ## Features
 
 - **Zero Backend Required**: All SQL execution happens in the browser
-- **Lightweight**: 7.2KB gzipped bundle (23KB minified)
+- **Lightweight**: 7.77KB gzipped bundle (24.98KB minified)
 - **Easy Integration**: Just add a CSS class to your code blocks
 - **Interactive Editing**: Edit SQL queries with real-time syntax highlighting
 - **Framework Agnostic**: Works with vanilla JS, React, Vue, and more
 - **Privacy-Focused**: No data transmission to external servers
 - **Lazy Loading**: DuckDB WASM loads only when needed
 - **Path Resolution**: Automatic resolution of relative file paths in SQL queries
-- **Theme Support**: Light, dark, and auto themes
+- **Theme Support**: Light, dark, auto themes with full customization
+- **Typography Customization**: Customize fonts and sizes per theme
 
 ## Quick Start
 
 ### Via CDN
+
+#### unpkg
 
 ```html
 <!DOCTYPE html>
@@ -29,7 +34,33 @@ A lightweight JavaScript library that transforms static SQL code blocks into int
     <code>SELECT 'Hello, World!' AS greeting;</code>
   </pre>
 
+  <!-- Latest version -->
   <script src="https://unpkg.com/sql-workbench-embedded@latest"></script>
+
+  <!-- Specific version (recommended for production) -->
+  <script src="https://unpkg.com/sql-workbench-embedded@0.1.0"></script>
+</body>
+</html>
+```
+
+#### jsDelivr
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+  <title>SQL Workbench Example</title>
+</head>
+<body>
+  <pre class="sql-workbench-embedded">
+    <code>SELECT 'Hello, World!' AS greeting;</code>
+  </pre>
+
+  <!-- Latest version -->
+  <script src="https://cdn.jsdelivr.net/npm/sql-workbench-embedded@latest"></script>
+
+  <!-- Specific version (recommended for production) -->
+  <script src="https://cdn.jsdelivr.net/npm/sql-workbench-embedded@0.1.0"></script>
 </body>
 </html>
 ```
@@ -53,6 +84,7 @@ npm run preview:prod
 ### Examples
 
 - **Basic Example**: [examples/index.html](examples/index.html) - Vanilla JavaScript integration
+- **Typography Example**: [examples/typography.html](examples/typography.html) - Font customization examples
 - **React Example**: [examples/react.html](examples/react.html) - React component integration
 - **Vue Example**: [examples/vue.html](examples/vue.html) - Vue 3 component integration
 
@@ -102,7 +134,12 @@ const embed = new SQLWorkbench.Embed(element, {
 ### Browser Usage (UMD)
 
 ```html
-<script src="https://unpkg.com/sql-workbench-embedded@latest"></script>
+<!-- Using unpkg -->
+<script src="https://unpkg.com/sql-workbench-embedded@0.1.0"></script>
+
+<!-- Or using jsDelivr -->
+<script src="https://cdn.jsdelivr.net/npm/sql-workbench-embedded@0.1.0"></script>
+
 <script>
   // Configure globally
   SQLWorkbench.config({
@@ -168,7 +205,7 @@ SQLWorkbench.config({
     // Extend existing theme with custom colors
     ocean: {
       extends: 'dark',
-      colors: {
+      config: {
         primaryBg: '#0ea5e9',
         primaryHover: '#0284c7',
         editorBg: '#1e3a5f',
@@ -179,7 +216,7 @@ SQLWorkbench.config({
     },
     // Standalone theme with all colors defined
     sunset: {
-      colors: {
+      config: {
         bgColor: '#fef3c7',
         textColor: '#92400e',
         borderColor: '#f59e0b',
@@ -211,9 +248,11 @@ new SQLWorkbench.Embed(element, {
 });
 ```
 
-### Available Theme Colors
+### Available Theme Properties
 
-When defining custom themes, you can override any of these CSS colors:
+When defining custom themes, you can override any of these properties:
+
+**Color Properties:**
 
 - `bgColor` - Main background color
 - `textColor` - Primary text color
@@ -245,10 +284,60 @@ When defining custom themes, you can override any of these CSS colors:
 - `syntaxFunction` - Function names
 - `syntaxOperator` - Operators (+, -, =, etc.)
 
+**Typography Properties (Optional):**
+
+- `fontFamily` - Font family for container and UI elements
+- `editorFontFamily` - Font family for the SQL editor
+- `fontSize` - Base font size (e.g., '14px', '1rem')
+- `editorFontSize` - Font size for the SQL editor
+- `buttonFontSize` - Font size for buttons
+- `metadataFontSize` - Font size for metadata text
+
+### Typography Customization
+
+You can customize font families and sizes in your themes:
+
+```javascript
+SQLWorkbench.config({
+  customThemes: {
+    // Large accessible theme for better readability
+    'large-accessible': {
+      extends: 'light',
+      config: {
+        fontSize: '18px',
+        editorFontSize: '16px',
+        buttonFontSize: '16px',
+        metadataFontSize: '14px',
+      }
+    },
+    // Custom editor font with ligatures
+    'fira-code': {
+      extends: 'dark',
+      config: {
+        editorFontFamily: '"Fira Code", "JetBrains Mono", monospace',
+        editorFontSize: '15px',
+      }
+    },
+    // Compact theme for dense displays
+    'compact': {
+      extends: 'dark',
+      config: {
+        fontSize: '12px',
+        editorFontSize: '12px',
+        buttonFontSize: '12px',
+        metadataFontSize: '10px',
+      }
+    }
+  }
+});
+```
+
+See [examples/typography.html](examples/typography.html) for a complete demonstration of typography customization.
+
 ### Theme Inheritance
 
-- **With `extends`**: Only define the colors you want to override. The base theme provides defaults for all others.
-- **Without `extends`**: You must define all required colors. The library will throw an error if any are missing.
+- **With `extends`**: Only define the properties you want to override. The base theme provides defaults for all others.
+- **Without `extends`**: You must define all required color properties. The library will throw an error if any are missing.
 
 ## Path Resolution
 
@@ -420,23 +509,23 @@ export default {
 
 The library is optimized for production with minimal bundle size:
 
-- **UMD Bundle**: 23KB minified, 7.2KB gzipped
-- **ES Module**: 36KB minified, 9.1KB gzipped
+- **UMD Bundle**: 24.98KB minified, 7.77KB gzipped
+- **ES Module**: 25.67KB minified, 7.82KB gzipped
 - **DuckDB WASM**: Loaded separately from CDN (~5MB on first use)
 
 ### Size Breakdown
 
-- **SQL Workbench Embed**: ~15KB (UI, syntax highlighting, path resolution)
+- **SQL Workbench Embed**: ~16KB (UI, syntax highlighting, path resolution, theming)
 - **DuckDB Client Library**: ~5KB (minimal DuckDB bindings)
-- **Build Overhead**: ~1KB (UMD wrapper, utilities)
+- **Build Overhead**: ~2KB (UMD wrapper, utilities)
 
 ### Performance Impact
 
-- **Initial Load**: 7.2KB gzipped (extremely lightweight)
-- **First Query**: Additional 5MB for DuckDB WASM binary (cached thereafter)
-- **Subsequent Loads**: Only 7.2KB (DuckDB cached)
+- **Initial Load**: 7.77KB gzipped (extremely lightweight)
+- **First Query**: Additional ~5MB for DuckDB WASM binary (cached thereafter)
+- **Subsequent Loads**: Only 7.77KB (DuckDB cached)
 
-The production build achieves the original ~20KB target while maintaining full functionality.
+The production build maintains a compact size while providing full functionality including typography customization.
 
 ## Browser Support
 
@@ -462,6 +551,7 @@ src/
 
 examples/
 ├── index.html            # Basic vanilla JS example
+├── typography.html       # Typography customization examples
 ├── react.html            # React integration example
 └── vue.html              # Vue 3 integration example
 ```

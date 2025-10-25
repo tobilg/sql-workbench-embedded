@@ -7,7 +7,7 @@ import { EmbedOptions, EmbedState, QueryResult, DEFAULT_CONFIG } from './types';
 import { highlightSQL, debounce } from './syntax-highlight';
 import { resolvePathsInSQL } from './path-resolver';
 import { duckDBManager } from './duckdb-manager';
-import { getThemeColors, applyThemeColors } from './styles';
+import { getThemeConfig, applyThemeConfig } from './styles';
 
 export class Embed {
   private element: HTMLElement;
@@ -76,8 +76,8 @@ export class Embed {
 
     // Apply custom theme variables if needed
     try {
-      const ThemeColors = getThemeColors(theme, this.options.customThemes);
-      applyThemeColors(this.container, ThemeColors);
+      const themeConfig = getThemeConfig(theme, this.options.customThemes);
+      applyThemeConfig(this.container, themeConfig);
     } catch (error) {
       console.warn('Failed to apply custom theme:', error);
       // Fall back to default theme

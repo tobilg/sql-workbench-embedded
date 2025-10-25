@@ -1,7 +1,7 @@
 /**
  * CSS theme variables interface
  */
-export interface ThemeColors {
+export interface ThemeConfig {
   /** Background color */
   bgColor: string;
   /** Text color */
@@ -54,6 +54,18 @@ export interface ThemeColors {
   syntaxFunction?: string;
   /** Syntax highlighting - operators */
   syntaxOperator?: string;
+  /** Font family for the container and UI elements */
+  fontFamily?: string;
+  /** Font family for the SQL editor */
+  editorFontFamily?: string;
+  /** Base font size */
+  fontSize?: string;
+  /** Font size for the SQL editor */
+  editorFontSize?: string;
+  /** Font size for buttons */
+  buttonFontSize?: string;
+  /** Font size for metadata text */
+  metadataFontSize?: string;
 }
 
 /**
@@ -62,8 +74,8 @@ export interface ThemeColors {
 export interface CustomTheme {
   /** Base theme to extend ('light' or 'dark') */
   extends?: 'light' | 'dark';
-  /** CSS color overrides */
-  colors: Partial<ThemeColors>;
+  /** Theme configuration overrides */
+  config: Partial<ThemeConfig>;
 }
 
 /**
