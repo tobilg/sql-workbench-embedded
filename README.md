@@ -516,11 +516,25 @@ embed.getContainer();  // Get container element
 
 ### React
 
+#### Installation
+
+**Option 1: CDN (Recommended for quick setup)**
+```html
+<!-- Add to your HTML head -->
+<script type="module" src="https://unpkg.com/sql-workbench-embedded@0.1.1/dist/sql-workbench-embedded.esm.js"></script>
+```
+
+**Option 2: npm**
+```bash
+npm install sql-workbench-embedded
+```
+
+#### Usage
+
 ```jsx
 import { useRef, useEffect } from 'react';
-import { SQLWorkbench } from 'sql-workbench-embedded';
 
-function SQLEmbed({ code, options }) {
+function SQLWorkbenchEmbedded({ code, options }) {
   const containerRef = useRef(null);
   const embedRef = useRef(null);
 
@@ -533,7 +547,7 @@ function SQLEmbed({ code, options }) {
       containerRef.current.appendChild(preElement);
 
       // Initialize the embed
-      embedRef.current = new window.SQLWorkbench.Embeddedded(preElement, options);
+      embedRef.current = new window.SQLWorkbench.Embedded(preElement, options);
     }
 
     return () => {
@@ -542,6 +556,16 @@ function SQLEmbed({ code, options }) {
   }, [code, options]);
 
   return <div ref={containerRef} />;
+}
+
+// Usage in your app
+function App() {
+  return (
+    <SQLWorkbenchEmbedded 
+      code="SELECT 'Hello, World!' AS greeting;"
+      options={{ editable: true, theme: 'light' }}
+    />
+  );
 }
 ```
 
@@ -573,7 +597,7 @@ export default {
         containerRef.value.appendChild(preElement);
 
         // Initialize the embed
-        embedRef.value = new window.SQLWorkbench.Embeddedded(preElement, props.options);
+        embedRef.value = new window.SQLWorkbench.Embedded(preElement, props.options);
       }
     });
 
@@ -606,7 +630,7 @@ export default {
       element.innerHTML = `<code>${this.code}</code>`;
       this.$refs.container.appendChild(element);
 
-      this.embed = new window.SQLWorkbench.Embeddedded(element, this.options);
+      this.embed = new window.SQLWorkbench.Embedded(element, this.options);
     }
   },
   beforeUnmount() {
