@@ -10,9 +10,9 @@
   "jsdelivr": "dist/sql-workbench-embedded.js",
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "import": "./dist/sql-workbench-embedded.esm.js",
-      "require": "./dist/sql-workbench-embedded.js",
-      "types": "./dist/index.d.ts"
+      "require": "./dist/sql-workbench-embedded.js"
     },
     "./package.json": "./package.json"
   },
