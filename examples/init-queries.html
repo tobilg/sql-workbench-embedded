@@ -232,6 +232,22 @@ SELECT
   </div>
 
   <div class="example-section">
+    <h2>Example 4: Attaching External DuckDB Databases</h2>
+    <p>
+      The <code>ATTACH</code> statement lets you connect to external DuckDB database files
+      hosted remotely. This is perfect for sharing pre-computed datasets without loading them
+      into the main database.
+    </p>
+    <p>
+      <strong>Note:</strong> Uncomment the ATTACH query in the configuration below to try this example.
+    </p>
+    <pre class="sql-workbench-embedded">-- Query the attached gtfs database
+-- Requires httpfs extension and ATTACH statement in init queries
+-- e.g ATTACH 'https://data.openrailway.dev/providers/gtfs-de/full/database.duckdb' AS gtfs_de (READ_ONLY)
+SELECT count(*) FROM gtfs_de.stops;</pre>
+  </div>
+
+  <div class="example-section">
     <h2>More Init Query Examples</h2>
     <p>Here are other common use cases for init queries:</p>
     <div class="code-block"><pre>// Install official extension
@@ -242,11 +258,12 @@ window.SQLWorkbench.config({
   ]
 });
 
-// Install community extensions
+// Attach external DuckDB database
 window.SQLWorkbench.config({
   initQueries: [
-    "INSTALL a5 FROM community",
-    "LOAD a5"
+    "INSTALL httpfs",
+    "LOAD httpfs",
+    "ATTACH 'https://data.openrailway.dev/providers/gtfs-de/full/database.duckdb' AS gtfs_de (READ_ONLY)"
   ]
 });
 
@@ -279,7 +296,8 @@ window.SQLWorkbench.config({
         "INSTALL spatial",
         "LOAD spatial",
         "INSTALL a5 FROM community",
-        "LOAD a5"
+        "LOAD a5",
+        "ATTACH 'https://data.openrailway.dev/providers/gtfs-de/full/database.duckdb' AS gtfs_de (READ_ONLY)"
       ],
       theme: 'auto'
     });

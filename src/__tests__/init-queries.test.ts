@@ -513,4 +513,113 @@ describe('initQueries feature', () => {
       expect(mockConnection.query).toHaveBeenCalledTimes(8);
     });
   });
+
+  describe('ATTACH database scenarios', () => {
+    beforeEach(() => {
+      (duckDBManager as any).db = mockDb;
+      (duckDBManager as any).connection = mockConnection;
+    });
+
+    it('should attach external database via init queries', async () => {
+      const queries = [
+        "ATTACH 'https://www.ssp.sh/de/weather-noas.duckdb' AS weather (READ_ONLY)",
+      ];
+
+      duckDBManager.configureInitQueries(queries);
+
+      await (duckDBManager as any).executeInitQueries();
+
+      expect(mockConnection.query).toHaveBeenCalledWith(
+        "ATTACH 'https://www.ssp.sh/de/weather-noas.duckdb' AS weather (READ_ONLY)"
+      );
+    });
+
+    it('should execute query on attached database after init queries', async () => {
+      const initQueries = [
+        "ATTACH 'https://www.ssp.sh/de/weather-noas.duckdb' AS weather (READ_ONLY)",
+      ];
+
+      duckDBManager.configureInitQueries(initQueries);
+
+      // Mock result for the weather query
+      mockConnection.query.mockResolvedValueOnce({
+        schema: { fields: [] },
+        numRows: 0,
+        numCols: 0,
+        getChildAt: () => ({ get: () => null }),
+      }).mockResolvedValueOnce({
+        schema: {
+          fields: [
+            { name: 'station', type: { toString: () => 'VARCHAR' } },
+            { name: 'date', type: { toString: () => 'DATE' } },
+            { name: 'temperature', type: { toString: () => 'DOUBLE' } },
+          ],
+        },
+        numRows: 10,
+        numCols: 3,
+        getChildAt: (col: number) => ({
+          get: (row: number) => {
+            if (col === 0) return `STATION_${row}`;
+            if (col === 1) return `2024-01-${String(row + 1).padStart(2, '0')}`;
+            if (col === 2) return 15.5 + row * 0.5;
+            return null;
+          },
+        }),
+      });
+
+      await duckDBManager.query('SELECT * FROM weather.weather LIMIT 10');
+
+      // Init query + user query
+      expect(mockConnection.query).toHaveBeenCalledTimes(2);
+      expect(mockConnection.query).toHaveBeenNthCalledWith(
+        1,
+        "ATTACH 'https://www.ssp.sh/de/weather-noas.duckdb' AS weather (READ_ONLY)"
+      );
+      expect(mockConnection.query).toHaveBeenNthCalledWith(
+        2,
+        'SELECT * FROM weather.weather LIMIT 10'
+      );
+    });
+
+    it('should attach multiple databases', async () => {
+      const queries = [
+        "ATTACH 'https://example.com/db1.duckdb' AS db1 (READ_ONLY)",
+        "ATTACH 'https://example.com/db2.duckdb' AS db2 (READ_ONLY)",
+      ];
+
+      duckDBManager.configureInitQueries(queries);
+
+      await (duckDBManager as any).executeInitQueries();
+
+      expect(mockConnection.query).toHaveBeenCalledTimes(2);
+      expect(mockConnection.query).toHaveBeenNthCalledWith(
+        1,
+        "ATTACH 'https://example.com/db1.duckdb' AS db1 (READ_ONLY)"
+      );
+      expect(mockConnection.query).toHaveBeenNthCalledWith(
+        2,
+        "ATTACH 'https://example.com/db2.duckdb' AS db2 (READ_ONLY)"
+      );
+    });
+
+    it('should combine ATTACH with extension loading', async () => {
+      const queries = [
+        'INSTALL httpfs',
+        'LOAD httpfs',
+        "ATTACH 'https://www.ssp.sh/de/weather-noas.duckdb' AS weather (READ_ONLY)",
+      ];
+
+      duckDBManager.configureInitQueries(queries);
+
+      await (duckDBManager as any).executeInitQueries();
+
+      expect(mockConnection.query).toHaveBeenCalledTimes(3);
+      expect(mockConnection.query).toHaveBeenNthCalledWith(1, 'INSTALL httpfs');
+      expect(mockConnection.query).toHaveBeenNthCalledWith(2, 'LOAD httpfs');
+      expect(mockConnection.query).toHaveBeenNthCalledWith(
+        3,
+        "ATTACH 'https://www.ssp.sh/de/weather-noas.duckdb' AS weather (READ_ONLY)"
+      );
+    });
+  });
 });
