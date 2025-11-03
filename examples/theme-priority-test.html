@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Theme Priority Test</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 2rem;
+      background: #f5f5f5;
+    }
+    h1 { color: #1f2937; }
+    h2 { color: #374151; margin-top: 2rem; }
+    .description {
+      background: #fff;
+      border-left: 4px solid #3b82f6;
+      padding: 1rem;
+      margin: 1rem 0;
+      border-radius: 4px;
+    }
+    .example-container {
+      margin-bottom: 3rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>Theme Priority Test</h1>
+  <p>This page demonstrates the three-tier theme priority system:</p>
+  <ol>
+    <li><strong>data-theme attribute</strong> (highest priority)</li>
+    <li><strong>Global config theme</strong> (middle priority)</li>
+    <li><strong>Default 'auto' theme</strong> (lowest priority)</li>
+  </ol>
+
+  <div class="example-container">
+    <h2>Example 1: Global Theme (ssp-light)</h2>
+    <div class="description">
+      No data-theme attribute, so it uses the global config theme: <code>ssp-light</code>
+    </div>
+    <pre class="sql-workbench-embedded">-- Uses global theme (ssp-light)
+SELECT 'Global theme applied!' as message,
+       '#f28482' as primary_color,
+       '#f0f0f0' as editor_bg;</pre>
+  </div>
+
+  <div class="example-container">
+    <h2>Example 2: Override with data-theme (ssp-dark)</h2>
+    <div class="description">
+      Has <code>data-theme="ssp-dark"</code>, which overrides the global theme
+    </div>
+    <pre class="sql-workbench-embedded" data-theme="ssp-dark">-- Uses dark theme override
+SELECT 'Dark theme applied!' as message,
+       '#658594' as primary_color,
+       '#181820' as editor_bg;</pre>
+  </div>
+
+  <div class="example-container">
+    <h2>Example 3: Built-in light theme override</h2>
+    <div class="description">
+      Has <code>data-theme="light"</code>, using built-in light theme
+    </div>
+    <pre class="sql-workbench-embedded" data-theme="light">-- Uses built-in light theme
+SELECT 'Built-in light theme!' as message,
+       '#007acc' as primary_color;</pre>
+  </div>
+
+  <div class="example-container">
+    <h2>Example 4: Built-in dark theme override</h2>
+    <div class="description">
+      Has <code>data-theme="dark"</code>, using built-in dark theme
+    </div>
+    <pre class="sql-workbench-embedded" data-theme="dark">-- Uses built-in dark theme
+SELECT 'Built-in dark theme!' as message,
+       '#007acc' as primary_color;</pre>
+  </div>
+
+  <div class="example-container">
+    <h2>Example 5: Programmatic instance creation</h2>
+    <div class="description">
+      Created via JavaScript with <code>theme: 'ssp-dark'</code> in constructor
+    </div>
+    <div id="programmatic-embed"></div>
+  </div>
+
+  <script type="module">
+    import SQLWorkbench from '../src/index.ts';
+
+    // SSP Light Theme - Based on actual ssp.sh website light mode
+    const SSP_LIGHT_THEME = {
+      extends: 'light',
+      config: {
+        bgColor: '#faf8f8',
+        textColor: '#4e4e4e',
+        borderColor: '#dadada',
+        editorBg: '#f0f0f0',
+        editorText: '#272822',
+        editorFocusBg: '#fafafa',
+        controlsBg: '#f0f0f0',
+        primaryBg: '#f28482',
+        primaryText: '#ffffff',
+        primaryHover: '#FF5D62',
+        secondaryBg: '#e8e8e8',
+        secondaryText: '#4e4e4e',
+        secondaryHover: '#dadada',
+        mutedText: '#afbfc9',
+        errorText: '#d32f2f',
+        errorBg: '#ffebee',
+        errorBorder: '#f28482',
+        tableHeaderBg: '#f0f0f0',
+        tableHeaderText: '#3150AA',
+        tableHover: '#fafafa',
+        syntaxKeyword: '#00a8c8',
+        syntaxString: '#d88200',
+        syntaxNumber: '#ae81ff',
+        syntaxComment: '#75715e',
+        syntaxFunction: '#75af00',
+        syntaxOperator: '#f92672',
+      }
+    };
+
+    // SSP Dark Theme - Based on actual ssp.sh website dark mode
+    const SSP_DARK_THEME = {
+      extends: 'dark',
+      config: {
+        bgColor: '#1F1F28',
+        textColor: '#DCD7BA',
+        borderColor: '#C8C093',
+        editorBg: '#181820',
+        editorText: '#DCD7BA',
+        editorFocusBg: '#1F1F28',
+        controlsBg: '#181820',
+        primaryBg: '#658594',
+        primaryText: '#DCD7BA',
+        primaryHover: '#7a9aa8',
+        secondaryBg: '#2a2a32',
+        secondaryText: '#DCD7BA',
+        secondaryHover: '#35353d',
+        mutedText: '#938AA9',
+        errorText: '#E46876',
+        errorBg: '#2d1f21',
+        errorBorder: '#E46876',
+        tableHeaderBg: '#181820',
+        tableHeaderText: '#658594',
+        tableHover: '#252530',
+        syntaxKeyword: '#00a8c8',
+        syntaxString: '#d88200',
+        syntaxNumber: '#ae81ff',
+        syntaxComment: '#938AA9',
+        syntaxFunction: '#75af00',
+        syntaxOperator: '#f92672',
+      }
+    };
+
+    // Configure with custom themes and global default theme
+    SQLWorkbench.config({
+      autoInit: false,
+      customThemes: {
+        'ssp-light': SSP_LIGHT_THEME,
+        'ssp-dark': SSP_DARK_THEME,
+      },
+      theme: 'ssp-light', // Global default theme
+    });
+
+    // Initialize embeds
+    SQLWorkbench.init();
+
+    // Create programmatic embed with theme override
+    // customThemes are automatically inherited from global config!
+    new SQLWorkbench.Embedded(document.getElementById('programmatic-embed'), {
+      initialCode: `-- Programmatically created with ssp-dark theme
+SELECT 'Programmatic embed!' as message,
+       'theme set via constructor' as method;`,
+      theme: 'ssp-dark', // Override global theme
+    });
+
+    // Log configuration for debugging
+    console.log('Current config:', SQLWorkbench.getConfig());
+
+    // Check containers after initialization
+    setTimeout(() => {
+      document.querySelectorAll('.sql-workbench-container').forEach((container, idx) => {
+        console.log(`Container ${idx + 1}:`, {
+          theme: container.getAttribute('data-theme'),
+          primaryBg: getComputedStyle(container).getPropertyValue('--sw-primary-bg'),
+          editorBg: getComputedStyle(container).getPropertyValue('--sw-editor-bg'),
+        });
+      });
+    }, 500);
+  </script>
+</body>
+</html>

@@ -1,6 +1,6 @@
 {
   "name": "sql-workbench-embedded",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Lightweight JavaScript library that transforms static SQL code blocks into interactive, browser-based SQL execution environments using DuckDB WASM",
   "main": "dist/sql-workbench-embedded.js",
   "browser": "dist/sql-workbench-embedded.js",

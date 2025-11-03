@@ -86,13 +86,14 @@ describe('Embedded', () => {
       expect(container?.getAttribute('data-theme')).toBe('dark');
     });
 
-    it('should prioritize options.theme over data-theme attribute', () => {
+    it('should prioritize data-theme attribute over options.theme', () => {
       const element = createSQLElement('SELECT 1');
       element.setAttribute('data-theme', 'dark');
       const embed = new Embedded(element, { theme: 'light' });
 
       const container = embed.getContainer();
-      expect(container?.getAttribute('data-theme')).toBe('light');
+      // data-theme attribute has highest priority
+      expect(container?.getAttribute('data-theme')).toBe('dark');
     });
   });
 

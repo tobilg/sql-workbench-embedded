@@ -7,7 +7,7 @@ A lightweight JavaScript library that transforms static SQL code blocks into int
 ## Features
 
 - **Zero Backend Required**: All SQL execution happens in the browser
-- **Lightweight**: 9.49 kB gzipped bundle (29.67 kB minified)
+- **Lightweight**: 9.54 kB gzipped bundle (29.81 kB minified)
 - **Easy Integration**: Just add a CSS class to your code blocks
 - **Interactive Editing**: Edit SQL queries with real-time syntax highlighting
 - **Framework Agnostic**: Works with vanilla JS, React, Vue, and more
@@ -15,7 +15,8 @@ A lightweight JavaScript library that transforms static SQL code blocks into int
 - **Lazy Loading**: DuckDB WASM loads only when needed
 - **Init Queries**: Execute initialization queries once for extension management
 - **Path Resolution**: Automatic resolution of relative file paths in SQL queries
-- **Theme Support**: Light, dark, auto themes with full customization
+- **Flexible Theming**: Three-tier priority system (data-attribute > config > default)
+- **Custom Themes**: Create themes that extend built-ins or define new color schemes
 - **Typography Customization**: Customize fonts and sizes per theme
 
 ## Quick Start
@@ -39,7 +40,7 @@ A lightweight JavaScript library that transforms static SQL code blocks into int
   <script src="https://unpkg.com/sql-workbench-embedded@latest"></script>
 
   <!-- Specific version (recommended for production) -->
-  <script src="https://unpkg.com/sql-workbench-embedded@0.1.1"></script>
+  <script src="https://unpkg.com/sql-workbench-embedded@0.1.4"></script>
 </body>
 </html>
 ```
@@ -61,7 +62,7 @@ A lightweight JavaScript library that transforms static SQL code blocks into int
   <script src="https://cdn.jsdelivr.net/npm/sql-workbench-embedded@latest"></script>
 
   <!-- Specific version (recommended for production) -->
-  <script src="https://cdn.jsdelivr.net/npm/sql-workbench-embedded@0.1.1"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sql-workbench-embedded@0.1.4"></script>
 </body>
 </html>
 ```
@@ -139,10 +140,10 @@ const embed = new SQLWorkbench.Embedded(element, {
 
 ```html
 <!-- Using unpkg -->
-<script src="https://unpkg.com/sql-workbench-embedded@0.1.1"></script>
+<script src="https://unpkg.com/sql-workbench-embedded@0.1.4"></script>
 
 <!-- Or using jsDelivr -->
-<script src="https://cdn.jsdelivr.net/npm/sql-workbench-embedded@0.1.1"></script>
+<script src="https://cdn.jsdelivr.net/npm/sql-workbench-embedded@0.1.4"></script>
 
 <script>
   // Configure globally
@@ -278,15 +279,17 @@ See [examples/init-queries.html](examples/init-queries.html) for a complete work
 
 Themes are resolved in the following priority order (highest to lowest):
 
-1. **Per-instance options** - `new Embedded(element, { theme: 'dark' })`
-2. **HTML `data-theme` attribute** - `<pre data-theme="ocean">`
-3. **Global configuration** - `SQLWorkbench.config({ theme: 'auto' })`
+1. **HTML `data-theme` attribute** - `<pre data-theme="ocean">` (highest)
+2. **Per-instance options** - `new Embedded(element, { theme: 'dark' })`
+3. **Global configuration** - `SQLWorkbench.config({ theme: 'auto' })` (lowest)
 
 ## Custom Themes
 
 You can define custom themes that either extend existing light/dark themes or define completely new color schemes.
 
 ### Defining Custom Themes
+
+Custom themes are automatically inherited by programmatic embeds, so you only need to define them once globally.
 
 ```javascript
 SQLWorkbench.config({
@@ -328,12 +331,16 @@ SQLWorkbench.config({
         tableHover: '#fef7cd'
       }
     }
-  }
+  },
+  theme: 'ocean'  // Global default theme
 });
 
-// Use custom themes
+// Use via data-attribute (highest priority)
+// <pre class="sql-workbench-embedded" data-theme="sunset">
+
+// Or programmatically (inherits customThemes automatically)
 new SQLWorkbench.Embedded(element, {
-  theme: 'ocean'  // or 'sunset'
+  theme: 'ocean'  // Overrides global default
 });
 ```
 
@@ -600,7 +607,7 @@ embed.getContainer();  // Get container element
 **Option 1: CDN (Recommended for quick setup)**
 ```html
 <!-- Add to your HTML head -->
-<script type="module" src="https://unpkg.com/sql-workbench-embedded@0.1.1/dist/sql-workbench-embedded.esm.js"></script>
+<script type="module" src="https://unpkg.com/sql-workbench-embedded@0.1.4/dist/sql-workbench-embedded.esm.js"></script>
 ```
 
 **Option 2: npm**
@@ -723,8 +730,8 @@ export default {
 
 The library is optimized for production with minimal bundle size:
 
-- **UMD Bundle**: 29.67 kB minified, 9.49 kB gzipped
-- **ES Module**: 30.38 kB minified, 9.54 kB gzipped
+- **UMD Bundle**: 29.81 kB minified, 9.54 kB gzipped
+- **ES Module**: 30.59 kB minified, 9.59 kB gzipped
 - **DuckDB WASM**: Loaded separately from CDN (~5MB on first use)
 
 ### Size Breakdown
@@ -735,11 +742,11 @@ The library is optimized for production with minimal bundle size:
 
 ### Performance Impact
 
-- **Initial Load**: 9.49 kB gzipped (extremely lightweight)
+- **Initial Load**: 9.54 kB gzipped (extremely lightweight)
 - **First Query**: Additional ~5MB for DuckDB WASM binary (cached thereafter)
-- **Subsequent Loads**: Only 9.49 kB (DuckDB cached)
+- **Subsequent Loads**: Only 9.54 kB (DuckDB cached)
 
-The production build maintains a compact size while providing full functionality including typography customization.
+The production build maintains a compact size while providing full functionality including flexible theming and typography customization.
 
 ## Browser Support
 

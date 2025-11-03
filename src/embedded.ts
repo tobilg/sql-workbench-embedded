@@ -8,6 +8,7 @@ import { highlightSQL, debounce } from './syntax-highlight';
 import { resolvePathsInSQL } from './path-resolver';
 import { duckDBManager } from './duckdb-manager';
 import { getThemeConfig, applyThemeConfig } from './styles';
+import { getGlobalConfig } from './config-store';
 
 export class Embedded {
   private element: HTMLElement;
@@ -24,15 +25,24 @@ export class Embedded {
 
   constructor(element: HTMLElement, options: Partial<EmbeddedOptions> = {}) {
     this.element = element;
-    
+
     // Extract theme from data-theme attribute if present
     const dataTheme = element.getAttribute('data-theme');
-    
-    this.options = {
+
+    // Merge with global config for customThemes if not provided
+    const globalConfig = getGlobalConfig();
+    const mergedOptions = {
       ...DEFAULT_CONFIG,
+      customThemes: globalConfig.customThemes, // Inherit from global
       ...options,
-      // Priority: options.theme > data-theme attribute > DEFAULT_CONFIG.theme
-      theme: options.theme ?? dataTheme ?? DEFAULT_CONFIG.theme,
+      // But allow explicit override of customThemes if provided
+      ...(options.customThemes ? { customThemes: options.customThemes } : {}),
+    };
+
+    this.options = {
+      ...mergedOptions,
+      // Priority: data-theme attribute > options.theme > DEFAULT_CONFIG.theme
+      theme: dataTheme ?? options.theme ?? DEFAULT_CONFIG.theme,
       initialCode: options.initialCode ?? this.extractInitialCode(),
     };
     this.initialCode = this.options.initialCode;

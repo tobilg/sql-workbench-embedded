@@ -4,29 +4,28 @@
  */
 
 import { Embedded } from './embedded';
-import { SQLWorkbenchConfig, DEFAULT_CONFIG } from './types';
+import { SQLWorkbenchConfig } from './types';
 import { injectStyles } from './styles';
 import { duckDBManager } from './duckdb-manager';
+import { getGlobalConfig, setGlobalConfig } from './config-store';
 
 // Track all embedded instances
 const embedInstances = new WeakMap<HTMLElement, Embedded>();
 const allEmbeds: Embedded[] = [];
 
-// Global configuration
-let globalConfig: Required<SQLWorkbenchConfig> = { ...DEFAULT_CONFIG };
-
 /**
  * Set global configuration
  */
 function config(options: Partial<SQLWorkbenchConfig>): void {
-  globalConfig = { ...globalConfig, ...options };
+  const current = getGlobalConfig();
+  setGlobalConfig({ ...current, ...options });
 }
 
 /**
  * Get current global configuration
  */
 function getConfig(): Required<SQLWorkbenchConfig> {
-  return { ...globalConfig };
+  return { ...getGlobalConfig() };
 }
 
 /**
@@ -42,6 +41,7 @@ function init(): void {
   injectStyles();
 
   // Find all matching elements
+  const globalConfig = getGlobalConfig();
   const elements = document.querySelectorAll<HTMLElement>(globalConfig.selector);
 
   elements.forEach((element) => {
@@ -50,10 +50,9 @@ function init(): void {
       return;
     }
 
-    // Create embedded - don't pass theme from globalConfig, let it be extracted from data-theme
-    // But DO pass customThemes so custom themes can be resolved
-    const { theme: _ignoredTheme, ...configWithoutTheme } = globalConfig;
-    const embed = new Embedded(element, configWithoutTheme);
+    // Pass full globalConfig - Embedded constructor handles theme priority
+    // Priority: data-theme attribute > globalConfig.theme > DEFAULT_CONFIG.theme
+    const embed = new Embedded(element, globalConfig);
     const container = embed.getContainer();
 
     if (container) {
@@ -127,14 +126,14 @@ if (typeof document !== 'undefined') {
   // Delay the check until after user code has a chance to run config()
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
-      if (globalConfig.autoInit) {
+      if (getGlobalConfig().autoInit) {
         init();
       }
     });
   } else {
     // DOM already loaded, use setTimeout to let user config() run first
     setTimeout(() => {
-      if (globalConfig.autoInit) {
+      if (getGlobalConfig().autoInit) {
         init();
       }
     }, 0);
