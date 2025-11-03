@@ -50,7 +50,7 @@ export default defineConfig({
   build: {
     lib: {
       entry: resolve(__dirname, 'src/index.ts'),
-      name: 'SQLWorkbenchEmbedded',
+      name: 'SQLWorkbench',
       formats: ['umd', 'es'],
       fileName: (format) => {
         if (format === 'umd') return 'sql-workbench-embedded.js';

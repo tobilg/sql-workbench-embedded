@@ -428,6 +428,85 @@ See [examples/typography.html](examples/typography.html) for a complete demonstr
 - **With `extends`**: Only define the properties you want to override. The base theme provides defaults for all others.
 - **Without `extends`**: You must define all required color properties. The library will throw an error if any are missing.
 
+## Using Pre-built Themes
+
+The [sql-workbench-embedded-themes](https://github.com/tobilg/sql-workbench-embedded-themes) package provides 66 ready-to-use themes converted from popular CodeMirror 5 themes (50 dark + 16 light themes).
+
+### Installation
+
+```bash
+npm install sql-workbench-embedded-themes
+```
+
+### Usage with Bundler (Tree-shakeable)
+
+```javascript
+import { SQLWorkbench } from 'sql-workbench-embedded';
+import { dracula, monokai, elegant } from 'sql-workbench-embedded-themes';
+
+// Configure with pre-built themes
+SQLWorkbench.config({
+  customThemes: {
+    dracula: {
+      config: dracula.config
+    },
+    monokai: {
+      config: monokai.config
+    }
+  },
+  theme: 'dracula'
+});
+```
+
+### Usage with CDN (UMD)
+
+For browser usage without a bundler, load individual theme bundles (~1.4KB each):
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+  <title>SQL Workbench with Themes</title>
+</head>
+<body>
+  <pre class="sql-workbench-embedded">
+    <code>SELECT * FROM generate_series(1, 10);</code>
+  </pre>
+
+  <!-- Load SQL Workbench -->
+  <script src="https://unpkg.com/sql-workbench-embedded@latest"></script>
+
+  <!-- Load specific themes from CDN -->
+  <script src="https://unpkg.com/sql-workbench-embedded-themes/dist/umd/themes/dracula.js"></script>
+  <script src="https://unpkg.com/sql-workbench-embedded-themes/dist/umd/themes/monokai.js"></script>
+
+  <script>
+    // Themes are available on window.SQLWorkbenchThemes
+    SQLWorkbench.config({
+      customThemes: {
+        dracula: {
+          config: window.SQLWorkbenchThemes.dracula.config
+        },
+        monokai: {
+          config: window.SQLWorkbenchThemes.monokai.config
+        }
+      },
+      theme: 'dracula'
+    });
+  </script>
+</body>
+</html>
+```
+
+### Available Themes
+
+The package includes 66 themes categorized as:
+
+- **Dark themes (50)**: dracula, monokai, material, nord, oceanic-next, and many more
+- **Light themes (16)**: elegant, idea, neat, paraiso-light, and more
+
+For a complete list of available themes, visit the [sql-workbench-embedded-themes repository](https://github.com/tobilg/sql-workbench-embedded-themes).
+
 ## Path Resolution
 
 The library automatically resolves relative file paths in SQL queries:
