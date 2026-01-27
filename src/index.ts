@@ -74,10 +74,11 @@ function setupMutationObserver(): void {
   }
 
   const observer = new MutationObserver((mutations) => {
+    if (typeof window === 'undefined') return;
     for (const mutation of mutations) {
       if (mutation.type === 'childList' && mutation.removedNodes.length > 0) {
         mutation.removedNodes.forEach((node) => {
-          if (node instanceof HTMLElement) {
+          if (node instanceof window.HTMLElement) {
             const embed = embedInstances.get(node);
             if (embed && !embed.isDestroyed()) {
               embed.destroy();
