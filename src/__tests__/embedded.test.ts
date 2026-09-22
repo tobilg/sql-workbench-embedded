@@ -31,6 +31,7 @@ describe('Embedded', () => {
   afterEach(() => {
     vi.restoreAllMocks();
     vi.clearAllTimers();
+    vi.useRealTimers();
   });
 
   describe('constructor and initialization', () => {
@@ -541,28 +542,44 @@ describe('Embedded', () => {
       vi.useFakeTimers();
     });
 
-    it('should enforce minimum 200ms loading duration', async () => {
-      vi.useRealTimers();
-      // Mock fast query
-      vi.mocked(duckDBManager.query).mockImplementation(async () => {
-        await wait(10);
-        return {
-          columns: ['id'],
-          rows: [[1]],
-          rowCount: 1,
-          executionTime: 10,
-        };
+    describe.each(['success', 'error'] as const)('loading duration on %s', (outcome) => {
+      it.each([
+        { queryDuration: 10, elapsed: 10, completionTime: 200 },
+        { queryDuration: 10, elapsed: 10.5, completionTime: 200 },
+        { queryDuration: 250, elapsed: 250, completionTime: 250 },
+      ])('should finish at $completionTime ms when the query takes $elapsed ms', async ({ queryDuration, elapsed, completionTime }) => {
+        // Control both clocks, including fractional elapsed time that real timers truncate.
+        vi.spyOn(performance, 'now').mockReturnValueOnce(0).mockReturnValueOnce(elapsed);
+        vi.mocked(duckDBManager.query).mockImplementationOnce(async () => {
+          await wait(queryDuration);
+          if (outcome === 'error') throw new Error('Query failed');
+          return {
+            columns: ['id'],
+            rows: [[1]],
+            rowCount: 1,
+            executionTime: elapsed,
+          };
+        });
+
+        const embed = new Embedded(createSQLElement('SELECT 1'));
+        const output = embed.getContainer()!.querySelector('.sql-workbench-output')!;
+        const runButton = embed.getContainer()!.querySelector<HTMLButtonElement>('.sql-workbench-button-primary')!;
+        const runPromise = embed.run();
+
+        await vi.advanceTimersByTimeAsync(completionTime - 1);
+        expect(output.classList.contains('sql-workbench-loading')).toBe(true);
+        expect(runButton.disabled).toBe(true);
+
+        await vi.advanceTimersByTimeAsync(1);
+        expect(output.classList.contains('sql-workbench-loading')).toBe(false);
+        expect(runButton.disabled).toBe(false);
+        if (outcome === 'success') {
+          expect(output.querySelector('table')).toBeTruthy();
+        } else {
+          expect(output.querySelector('.sql-workbench-error')?.textContent).toContain('Query failed');
+        }
+        await runPromise;
       });
-
-      const element = createSQLElement('SELECT 1');
-      const embed = new Embedded(element);
-
-      const startTime = Date.now();
-      await embed.run();
-      const elapsed = Date.now() - startTime;
-
-      expect(elapsed).toBeGreaterThanOrEqual(200);
-      vi.useFakeTimers();
     });
 
     it('should not run query when already loading', async () => {

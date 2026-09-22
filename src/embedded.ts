@@ -396,10 +396,10 @@ export class Embedded {
       const result = await duckDBManager.query(rewriteFilePaths(sql, pathMap));
       if (this.destroyed) return;
 
-      // Ensure minimum loading duration for UX
+      // Round up the remaining delay so timer truncation cannot shorten the loading duration.
       const elapsed = performance.now() - startTime;
       if (elapsed < 200) {
-        await new Promise(resolve => setTimeout(resolve, 200 - elapsed));
+        await new Promise(resolve => setTimeout(resolve, Math.ceil(200 - elapsed)));
       }
       if (this.destroyed) return;
 
@@ -411,7 +411,7 @@ export class Embedded {
       // Ensure minimum loading duration even on error
       const elapsed = performance.now() - startTime;
       if (elapsed < 200) {
-        await new Promise(resolve => setTimeout(resolve, 200 - elapsed));
+        await new Promise(resolve => setTimeout(resolve, Math.ceil(200 - elapsed)));
       }
       if (this.destroyed) return;
 
