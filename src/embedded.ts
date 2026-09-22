@@ -5,13 +5,15 @@
 
 import { EmbeddedOptions, EmbeddedState, QueryResult, DEFAULT_CONFIG } from './types';
 import { highlightSQL, debounce } from './syntax-highlight';
-import { resolvePathsInSQL } from './path-resolver';
+import { resolvePathsInSQL, rewriteFilePaths } from './path-resolver';
 import { duckDBManager } from './duckdb-manager';
-import { getThemeConfig, applyThemeConfig } from './styles';
-import { getGlobalConfig } from './config-store';
+import { getThemeConfig, applyThemeConfig, injectStyles } from './styles';
+import { cloneConfig, getGlobalConfig } from './config-store';
+import { trackEmbed, untrackEmbed } from './instance-registry';
+import { getEditorText } from './editor-text';
 
 export class Embedded {
-  private element: HTMLElement;
+  private element: HTMLElement | null;
   private options: Required<EmbeddedOptions>;
   private container: HTMLElement | null = null;
   private editorElement: HTMLDivElement | null = null;
@@ -22,6 +24,7 @@ export class Embedded {
   private initialCode: string;
   private state: EmbeddedState = 'idle';
   private destroyed = false;
+  private composing = false;
 
   constructor(element: HTMLElement, options: Partial<EmbeddedOptions> = {}) {
     this.element = element;
@@ -29,22 +32,17 @@ export class Embedded {
     // Extract theme from data-theme attribute if present
     const dataTheme = element.getAttribute('data-theme');
 
-    // Merge with global config for customThemes if not provided
+    // Apply defaults, then global settings, then per-instance overrides.
     const globalConfig = getGlobalConfig();
-    const mergedOptions = {
-      ...DEFAULT_CONFIG,
-      customThemes: globalConfig.customThemes, // Inherit from global
-      ...options,
-      // But allow explicit override of customThemes if provided
-      ...(options.customThemes ? { customThemes: options.customThemes } : {}),
-    };
 
-    this.options = {
-      ...mergedOptions,
-      // Priority: data-theme attribute > options.theme > DEFAULT_CONFIG.theme
-      theme: dataTheme ?? options.theme ?? DEFAULT_CONFIG.theme,
+    this.options = cloneConfig({
+      ...DEFAULT_CONFIG,
+      ...globalConfig,
+      ...options,
+      // Theme priority: data-theme > instance > global > default.
+      theme: dataTheme ?? options.theme ?? globalConfig.theme ?? DEFAULT_CONFIG.theme,
       initialCode: options.initialCode ?? this.extractInitialCode(),
-    };
+    });
     this.initialCode = this.options.initialCode;
 
     this.init();
@@ -55,22 +53,24 @@ export class Embedded {
    */
   private extractInitialCode(): string {
     // Check for <pre><code> structure
-    const codeElement = this.element.querySelector('code');
+    const codeElement = this.element?.querySelector('code');
     if (codeElement) {
       return codeElement.textContent?.trim() ?? '';
     }
 
     // Fallback to element text content
-    return this.element.textContent?.trim() ?? '';
+    return this.element?.textContent?.trim() ?? '';
   }
 
   /**
    * Initialize the embed
    */
   private init(): void {
+    injectStyles();
     this.createUI();
     this.attachEventListeners();
     this.updateEditor();
+    trackEmbed(this, this.element!, this.container!);
   }
 
   /**
@@ -94,6 +94,7 @@ export class Embedded {
       // Fall back to default theme
       const fallbackTheme = theme === 'dark' ? 'dark' : 'light';
       this.container.setAttribute('data-theme', fallbackTheme);
+      applyThemeConfig(this.container, getThemeConfig(fallbackTheme));
     }
 
     // Create editor wrapper
@@ -107,6 +108,7 @@ export class Embedded {
     // Create "Open in SQL Workbench" button if enabled
     if (this.options.showOpenButton) {
       this.openButton = document.createElement('button');
+      this.openButton.type = 'button';
       this.openButton.className = 'sql-workbench-button sql-workbench-button-secondary sql-workbench-button-icon sql-workbench-button-open';
       this.openButton.setAttribute('aria-label', 'Open in SQL Workbench');
       this.openButton.setAttribute('title', 'Open in SQL Workbench');
@@ -131,11 +133,13 @@ export class Embedded {
     }
 
     this.resetButton = document.createElement('button');
+    this.resetButton.type = 'button';
     this.resetButton.className = 'sql-workbench-button sql-workbench-button-secondary sql-workbench-button-reset sql-workbench-button-hidden';
     this.resetButton.textContent = 'Reset';
     this.resetButton.setAttribute('aria-label', 'Reset to original code');
 
     this.runButton = document.createElement('button');
+    this.runButton.type = 'button';
     this.runButton.className = 'sql-workbench-button sql-workbench-button-primary sql-workbench-button-run';
     this.runButton.textContent = 'Run';
     this.runButton.setAttribute('aria-label', 'Execute SQL query');
@@ -171,7 +175,7 @@ export class Embedded {
     this.container.appendChild(this.outputElement);
 
     // Replace original element
-    this.element.parentNode?.replaceChild(this.container, this.element);
+    this.element?.parentNode?.replaceChild(this.container, this.element);
   }
 
   /**
@@ -210,6 +214,7 @@ export class Embedded {
 
     // Keyboard shortcuts
     this.editorElement?.addEventListener('keydown', (e) => {
+      if (e.isComposing || this.composing) return;
       // Open in SQL Workbench: CMD/CTRL + Shift + Enter
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'Enter') {
         e.preventDefault();
@@ -230,23 +235,28 @@ export class Embedded {
         return;
       }
       // Handle Enter key to insert newline character instead of browser default
-      if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
+      if (this.options.editable && e.key === 'Enter' && !e.ctrlKey && !e.metaKey) {
         e.preventDefault();
         this.insertText('\n');
         return;
       }
-      // Handle Tab key to insert spaces
-      if (e.key === 'Tab') {
-        e.preventDefault();
-        this.insertText('  '); // Insert 2 spaces for tab
-        return;
-      }
+      // Tab and Shift+Tab retain the browser's normal focus navigation.
     });
 
     // Syntax highlighting on input (debounced)
     if (this.options.editable) {
       const debouncedUpdate = debounce(() => this.updateEditor(), 150);
       this.editorElement?.addEventListener('input', debouncedUpdate);
+      this.editorElement?.addEventListener('compositionstart', () => { this.composing = true; });
+      this.editorElement?.addEventListener('compositionend', () => {
+        this.composing = false;
+        this.updateEditor();
+      });
+      this.editorElement?.addEventListener('paste', (event) => {
+        if (!event.clipboardData) return;
+        event.preventDefault();
+        this.insertText(event.clipboardData.getData('text/plain').replace(/\r\n?/g, '\n'));
+      });
     }
   }
 
@@ -254,123 +264,86 @@ export class Embedded {
    * Update editor with syntax highlighting
    */
   private updateEditor(): void {
-    if (!this.editorElement) return;
-
-    // Get current code
+    const editor = this.editorElement;
+    if (!editor || this.composing) return;
     const code = this.getCode();
-
-    // Save cursor position relative to text content
     const selection = window.getSelection();
-    let cursorPosition = 0;
-
-    if (this.options.editable && selection && selection.rangeCount > 0) {
-      const range = selection.getRangeAt(0);
-      const preCaretRange = range.cloneRange();
-      preCaretRange.selectNodeContents(this.editorElement);
-      preCaretRange.setEnd(range.endContainer, range.endOffset);
-      cursorPosition = preCaretRange.toString().length;
+    let anchor: number | undefined;
+    let focus: number | undefined;
+    if (this.options.editable && selection?.anchorNode && selection.focusNode &&
+        editor.contains(selection.anchorNode) && editor.contains(selection.focusNode)) {
+      anchor = this.textOffset(selection.anchorNode, selection.anchorOffset);
+      focus = this.textOffset(selection.focusNode, selection.focusOffset);
     }
-
-    // Apply syntax highlighting
-    const highlighted = highlightSQL(code);
-    this.editorElement.innerHTML = highlighted;
-
-    // Restore cursor position
-    if (this.options.editable && cursorPosition > 0) {
-      try {
-        this.setCursorPosition(cursorPosition);
-      } catch {
-        // Cursor restoration failed, ignore
-      }
+    this.renderEditor(code);
+    if (anchor !== undefined && focus !== undefined && selection) {
+      const start = this.textPoint(anchor);
+      const end = this.textPoint(focus);
+      selection.setBaseAndExtent(start.node, start.offset, end.node, end.offset);
     }
   }
 
-  /**
-   * Insert text at current cursor position
-   */
+  private renderEditor(code: string): void {
+    const editor = this.editorElement!;
+    editor.innerHTML = highlightSQL(code);
+    // A final newline needs a visible empty line for native caret positioning.
+    // This placeholder is excluded from SQL text and selection offsets.
+    if (code.endsWith('\n')) {
+      const placeholder = document.createElement('br');
+      placeholder.setAttribute('data-sql-workbench-placeholder', '');
+      editor.appendChild(placeholder);
+    }
+  }
+
+  private textOffset(node: Node, offset: number): number {
+    const range = document.createRange();
+    range.selectNodeContents(this.editorElement!);
+    range.setEnd(node, offset);
+    return getEditorText(range.cloneContents()).length;
+  }
+
+  private textPoint(position: number): { node: Node; offset: number } {
+    const editor = this.editorElement!;
+    const iterator = document.createNodeIterator(editor, NodeFilter.SHOW_TEXT);
+    let remaining = position;
+    let node = iterator.nextNode();
+    let last: Node = editor;
+    while (node) {
+      const length = node.textContent?.length ?? 0;
+      if (remaining <= length) return { node, offset: remaining };
+      remaining -= length;
+      last = node;
+      node = iterator.nextNode();
+    }
+    return { node: last, offset: last === editor ? 0 : (last.textContent?.length ?? 0) };
+  }
+
+  /** Insert plain text without inserting clipboard HTML or modifying an outside selection. */
   private insertText(text: string): void {
     const selection = window.getSelection();
-    if (!selection || !this.editorElement) return;
-
-    // Delete any selected content first
-    if (!selection.isCollapsed) {
-      selection.deleteFromDocument();
-    }
-
-    // Get current cursor position
+    const editor = this.editorElement;
+    if (!this.options.editable || !selection || !editor || !selection.rangeCount) return;
     const range = selection.getRangeAt(0);
-    const preCaretRange = range.cloneRange();
-    preCaretRange.selectNodeContents(this.editorElement);
-    preCaretRange.setEnd(range.endContainer, range.endOffset);
-    const cursorPosition = preCaretRange.toString().length;
-
-    // Insert text into the code
+    if (!editor.contains(range.startContainer) || !editor.contains(range.endContainer)) return;
+    const start = this.textOffset(range.startContainer, range.startOffset);
+    const end = this.textOffset(range.endContainer, range.endOffset);
     const code = this.getCode();
-    const newCode = code.substring(0, cursorPosition) + text + code.substring(cursorPosition);
-    
-    // Update editor with new code
-    const highlighted = highlightSQL(newCode);
-    this.editorElement.innerHTML = highlighted;
-
-    // Restore cursor position after the inserted text
-    this.setCursorPosition(cursorPosition + text.length);
-
-    // Trigger input event for consistency
-    const event = new Event('input', { bubbles: true });
-    this.editorElement.dispatchEvent(event);
+    this.renderEditor(code.slice(0, start) + text + code.slice(end));
+    this.setCursorPosition(start + text.length);
+    editor.dispatchEvent(new Event('input', { bubbles: true }));
   }
 
-  /**
-   * Set cursor position in editor
-   */
   private setCursorPosition(position: number): void {
     if (!this.editorElement) return;
-
-    const selection = window.getSelection();
-    if (!selection) return;
-
-    let charCount = 0;
-    const nodeIterator = document.createNodeIterator(
-      this.editorElement,
-      NodeFilter.SHOW_TEXT
-    );
-
-    let currentNode = nodeIterator.nextNode();
-    let found = false;
-
-    while (currentNode) {
-      const textLength = currentNode.textContent?.length ?? 0;
-
-      if (charCount + textLength >= position) {
-        const range = document.createRange();
-        const offset = Math.min(position - charCount, textLength);
-        range.setStart(currentNode, offset);
-        range.collapse(true);
-        selection.removeAllRanges();
-        selection.addRange(range);
-        found = true;
-        break;
-      }
-
-      charCount += textLength;
-      currentNode = nodeIterator.nextNode();
-    }
-
-    // If we couldn't find the exact position, place cursor at the end
-    if (!found && this.editorElement.lastChild) {
-      const range = document.createRange();
-      range.selectNodeContents(this.editorElement);
-      range.collapse(false);
-      selection.removeAllRanges();
-      selection.addRange(range);
-    }
+    const point = this.textPoint(position);
+    window.getSelection()?.setPosition(point.node, point.offset);
   }
 
   /**
    * Get current SQL code from editor
    */
   private getCode(): string {
-    return this.editorElement?.textContent ?? '';
+    return this.editorElement ? getEditorText(this.editorElement) : '';
   }
 
   /**
@@ -386,7 +359,7 @@ export class Embedded {
    * Run SQL query
    */
   async run(): Promise<void> {
-    if (this.state === 'loading') return;
+    if (this.destroyed || this.state === 'loading') return;
 
     const sql = this.getCode();
     if (!sql.trim()) {
@@ -407,39 +380,40 @@ export class Embedded {
           cdn: this.options.duckdbCDN,
         });
 
-        // Configure init queries from global config
-        if (this.options.initQueries && this.options.initQueries.length > 0) {
-          duckDBManager.configureInitQueries(this.options.initQueries);
-        }
+        // The first starting embed chooses setup SQL, including an explicit empty list.
+        duckDBManager.configureInitQueries(this.options.initQueries);
       }
 
       // Resolve and register file paths
       const pathMap = resolvePathsInSQL(sql, { baseUrl: this.options.baseUrl });
 
-      for (const [originalPath, resolvedUrl] of pathMap.entries()) {
-        // Extract filename for registration
-        const filename = originalPath.split('/').pop() ?? originalPath;
-        await duckDBManager.registerFile(filename, resolvedUrl);
+      for (const resolvedUrl of new Set(pathMap.values())) {
+        await duckDBManager.registerFile(resolvedUrl, resolvedUrl);
+        if (this.destroyed) return;
       }
 
       // Execute query
-      const result = await duckDBManager.query(sql);
+      const result = await duckDBManager.query(rewriteFilePaths(sql, pathMap));
+      if (this.destroyed) return;
 
       // Ensure minimum loading duration for UX
       const elapsed = performance.now() - startTime;
       if (elapsed < 200) {
         await new Promise(resolve => setTimeout(resolve, 200 - elapsed));
       }
+      if (this.destroyed) return;
 
       this.setState('success');
       this.showResult(result);
       this.showResetButton();
     } catch (error) {
+      if (this.destroyed) return;
       // Ensure minimum loading duration even on error
       const elapsed = performance.now() - startTime;
       if (elapsed < 200) {
         await new Promise(resolve => setTimeout(resolve, 200 - elapsed));
       }
+      if (this.destroyed) return;
 
       this.setState('error');
       this.showError(error instanceof Error ? error.message : String(error));
@@ -592,8 +566,9 @@ export class Embedded {
    * Open current query in SQL Workbench
    */
   private openInSQLWorkbench(): void {
-    const query = this.getCode();
-    if (!query.trim()) return;
+    const code = this.getCode();
+    if (!code.trim()) return;
+    const query = rewriteFilePaths(code, resolvePathsInSQL(code, { baseUrl: this.options.baseUrl }));
 
     // Prepend init queries if configured
     let fullQuery = query;
@@ -614,6 +589,9 @@ export class Embedded {
   destroy(): void {
     if (this.destroyed) return;
 
+    this.destroyed = true;
+    untrackEmbed(this);
+
     // Remove event listeners (handled by removing DOM elements)
     this.container?.remove();
 
@@ -624,8 +602,7 @@ export class Embedded {
     this.runButton = null;
     this.resetButton = null;
     this.openButton = null;
-
-    this.destroyed = true;
+    this.element = null;
   }
 
   /**

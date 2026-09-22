@@ -181,7 +181,7 @@
           // Create a pre element with the SQL code
           const preElement = document.createElement('pre');
           preElement.className = 'sql-workbench-embedded';
-          preElement.innerHTML = `<code>${code}</code>`;
+          preElement.textContent = code;
           containerRef.current.appendChild(preElement);
           
           // Initialize the embedded
@@ -398,6 +398,6 @@ ORDER BY date;`
   </script>
   
   <!-- Load SQL Workbench Embedded library from unpkg -->
-  <script type="module" src="https://unpkg.com/sql-workbench-embedded@0.1.1/dist/sql-workbench-embedded.esm.js"></script>
+  <script type="module" src="../src/index.ts"></script>
 </body>
 </html>

@@ -8,10 +8,9 @@ import { SQLWorkbenchConfig } from './types';
 import { injectStyles } from './styles';
 import { duckDBManager } from './duckdb-manager';
 import { getGlobalConfig, setGlobalConfig } from './config-store';
+import { findEmbed, destroyEmbeds } from './instance-registry';
 
-// Track all embedded instances
-const embedInstances = new WeakMap<HTMLElement, Embedded>();
-const allEmbeds: Embedded[] = [];
+let autoInitTimer: ReturnType<typeof setTimeout> | undefined;
 
 /**
  * Set global configuration
@@ -25,7 +24,7 @@ function config(options: Partial<SQLWorkbenchConfig>): void {
  * Get current global configuration
  */
 function getConfig(): Required<SQLWorkbenchConfig> {
-  return { ...getGlobalConfig() };
+  return getGlobalConfig();
 }
 
 /**
@@ -46,76 +45,28 @@ function init(): void {
 
   elements.forEach((element) => {
     // Skip if already initialized
-    if (embedInstances.has(element)) {
+    if (findEmbed(element)) {
       return;
     }
 
     // Pass full globalConfig - Embedded constructor handles theme priority
     // Priority: data-theme attribute > globalConfig.theme > DEFAULT_CONFIG.theme
-    const embed = new Embedded(element, globalConfig);
-    const container = embed.getContainer();
-
-    if (container) {
-      embedInstances.set(container, embed);
-      allEmbeds.push(embed);
-    }
-  });
-
-  // Set up MutationObserver for automatic cleanup
-  setupMutationObserver();
-}
-
-/**
- * Setup MutationObserver to detect removed embeds
- */
-function setupMutationObserver(): void {
-  if (typeof window === 'undefined' || !window.MutationObserver) {
-    return;
-  }
-
-  const observer = new MutationObserver((mutations) => {
-    if (typeof window === 'undefined') return;
-    for (const mutation of mutations) {
-      if (mutation.type === 'childList' && mutation.removedNodes.length > 0) {
-        mutation.removedNodes.forEach((node) => {
-          if (node instanceof window.HTMLElement) {
-            const embed = embedInstances.get(node);
-            if (embed && !embed.isDestroyed()) {
-              embed.destroy();
-              const index = allEmbeds.indexOf(embed);
-              if (index > -1) {
-                allEmbeds.splice(index, 1);
-              }
-            }
-          }
-        });
-      }
-    }
-  });
-
-  observer.observe(document.body, {
-    childList: true,
-    subtree: true,
+    new Embedded(element, globalConfig);
   });
 }
 
 /**
  * Destroy all embeds and cleanup
  */
-function destroy(): void {
-  // Destroy all embed instances
-  allEmbeds.forEach((embed) => {
-    if (!embed.isDestroyed()) {
-      embed.destroy();
-    }
-  });
+function destroy(): Promise<void> {
+  if (typeof document !== 'undefined') document.removeEventListener('DOMContentLoaded', autoInitialize);
+  clearTimeout(autoInitTimer);
+  destroyEmbeds();
+  return duckDBManager.close();
+}
 
-  allEmbeds.length = 0;
-
-  // Close DuckDB connection
-  duckDBManager.close().catch((error) => {
-    console.error('Failed to close DuckDB connection:', error);
-  });
+function autoInitialize(): void {
+  if (getGlobalConfig().autoInit) init();
 }
 
 /**
@@ -126,18 +77,10 @@ function destroy(): void {
 if (typeof document !== 'undefined') {
   // Delay the check until after user code has a chance to run config()
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-      if (getGlobalConfig().autoInit) {
-        init();
-      }
-    });
+    document.addEventListener('DOMContentLoaded', autoInitialize, { once: true });
   } else {
     // DOM already loaded, use setTimeout to let user config() run first
-    setTimeout(() => {
-      if (getGlobalConfig().autoInit) {
-        init();
-      }
-    }, 0);
+    autoInitTimer = setTimeout(autoInitialize, 0);
   }
 }
 

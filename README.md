@@ -15,7 +15,7 @@ A lightweight JavaScript library that transforms static SQL code blocks into int
 - **Lazy Loading**: DuckDB WASM loads only when needed
 - **Init Queries**: Execute initialization queries once for extension management
 - **Path Resolution**: Automatic resolution of relative file paths in SQL queries
-- **Flexible Theming**: Three-tier priority system (data-attribute > config > default)
+- **Flexible Theming**: Theme priority follows data-attribute > instance options > global config > default
 - **Custom Themes**: Create themes that extend built-ins or define new color schemes
 - **Typography Customization**: Customize fonts and sizes per theme
 
@@ -69,6 +69,8 @@ A lightweight JavaScript library that transforms static SQL code blocks into int
 
 ### Development Setup
 
+Vite bundles the JavaScript, and TypeScript 7 checks the source and generates declaration files with `npm run build:types`. The build generates declarations after Vite finishes, so Vite's output cleanup cannot remove them. The package includes all generated `dist/*.d.ts` files, with `dist/index.d.ts` as the public type entry point.
+
 ```bash
 # Install dependencies
 npm install
@@ -82,6 +84,34 @@ npm run build
 # Preview production build (http://localhost:4173/examples/index.html)
 npm run preview:prod
 ```
+
+### Releasing to npm
+
+[`.github/workflows/release.yml`](.github/workflows/release.yml) follows the [Valhalla release workflow](https://github.com/tobilg/valhalla-wasm/blob/main/.github/workflows/release.yml): pushing a stable `vMAJOR.MINOR.PATCH` tag validates the version, installs from the lockfile, runs type checking and unit tests, builds, and verifies a packed release. The publish job downloads that exact tarball and publishes it with npm trusted publishing and provenance. The tag, `package.json`, and `package-lock.json` must agree. Prerelease tags are rejected.
+
+Manual runs through **Actions → Release npm package → Run workflow** perform the same verification and upload the `npm-release` artifact, but do not publish. The verification includes TypeScript consumers using both NodeNext and Bundler resolution without the optional DuckDB dependency installed.
+
+Before the first automated publication, configure the `sql-workbench-embedded` package on npm under **Settings → Trusted publishing → GitHub Actions**:
+
+| Setting | Value |
+| --- | --- |
+| Organization or user | `tobilg` |
+| Repository | `sql-workbench-embedded` |
+| Workflow filename | `release.yml` |
+| Environment | Leave empty |
+| Allowed actions | Enable direct `npm publish` |
+
+The workflow uses Node from `.nvmrc` and npm 12.0.2 for publishing. Authentication uses GitHub's OIDC grant (`id-token: write` on the publish job); an `NPM_TOKEN` secret is not needed. See [npm's trusted publishing documentation](https://docs.npmjs.com/trusted-publishers/).
+
+After committing your changes, create the next release with:
+
+```bash
+npm version patch  # Or minor/major; updates package files and creates a commit and tag
+git push origin main
+git push origin v0.2.1  # Use the exact tag printed by npm version
+```
+
+If the version is already set to the intended release (currently `0.2.0`), commit the changes and create its tag directly with `git tag -a v0.2.0 -m "Release 0.2.0"`, then push that tag. Push the workflow to `main` before using manual runs. A rerun skips publication only if npm already contains the same version with an identical tarball integrity hash; conflicting bytes or registry errors fail the job.
 
 ### Examples
 
@@ -184,6 +214,14 @@ SQLWorkbench.config({
 
 ### Per-Instance Options
 
+Programmatic embeds inherit the global configuration set with `SQLWorkbench.config()` at creation time. Per-instance options override those settings; omitted settings use the global value or built-in default. Later global configuration changes do not update existing embeds.
+
+Configuration is copied, including initialization query arrays and custom theme definitions. Mutating an options object or a value returned by `SQLWorkbench.getConfig()` does not change existing configuration or embeds.
+
+`duckdbCDN` is the versionless DuckDB package root. The loader requests workers and WASM from `${duckdbCDN}@${duckdbVersion}/dist/` and, when needed, the JavaScript module from `${duckdbCDN}@${duckdbVersion}/+esm`. A matching-version `window.duckdb` module takes precedence, followed by a matching installed package; otherwise the configured module URL is used. A custom host must serve these paths, including a browser-compatible ESM module when no matching module is available locally.
+
+All embeds share one database. The first embed to start a query selects its DuckDB settings and initialization queries for that database session. To change them, await `SQLWorkbench.destroy()` before configuring and creating new embeds.
+
 ```javascript
 const embed = new SQLWorkbench.Embedded(element, {
   initialCode: 'SELECT 1;',
@@ -281,7 +319,8 @@ Themes are resolved in the following priority order (highest to lowest):
 
 1. **HTML `data-theme` attribute** - `<pre data-theme="ocean">` (highest)
 2. **Per-instance options** - `new Embedded(element, { theme: 'dark' })`
-3. **Global configuration** - `SQLWorkbench.config({ theme: 'auto' })` (lowest)
+3. **Global configuration** - `SQLWorkbench.config({ theme: 'dark' })`
+4. **Built-in default** - `'auto'`, which follows the system preference
 
 ## Custom Themes
 
@@ -543,6 +582,8 @@ SQLWorkbench.config({
 });
 ```
 
+Supported literal file references in `FROM`/`JOIN` clauses and file-reader calls are registered and executed using their full resolved URLs. Embeds can read identically named files from different base URLs without collisions. The displayed SQL stays unchanged; ordinary string values and comments are preserved. Queries opened in SQL Workbench also carry these resolved URLs.
+
 ## Open in SQL Workbench
 
 Each embed includes an "Open in SQL Workbench" button (enabled by default) that opens the current query in the full [SQL Workbench](https://sql-workbench.com) web application. The query is encoded in the URL hash using URL-safe Base64 encoding for sharing and persistence.
@@ -568,7 +609,7 @@ const embed = new SQLWorkbench.Embedded(element, {
 - **Ctrl+Enter** (Mac: **Cmd+Enter**): Execute query
 - **Ctrl+Shift+Enter** (Mac: **Cmd+Shift+Enter**): Open in SQL Workbench
 - **Ctrl+Backspace** (Mac: **Cmd+Backspace**): Reset to original code
-- **Tab**: Navigate between buttons
+- **Tab / Shift+Tab**: Move focus forward / backward between the editor and other page controls
 
 ## API Reference
 
@@ -578,7 +619,13 @@ Initialize all embeds matching the configured selector.
 
 ### SQLWorkbench.destroy()
 
-Destroy all embeds and cleanup resources.
+Destroy all embeds, including directly constructed instances, and disconnect automatic cleanup. UI removal is immediate. The returned promise waits for active database operations and releases the connection and worker; shutdown errors reject the promise.
+
+```javascript
+await SQLWorkbench.destroy();
+```
+
+Moving an embed between connected parents preserves it. Removing its container or an ancestor automatically destroys the instance. Destroying a single embed leaves the shared database available to other embeds.
 
 ### SQLWorkbench.config(options)
 
@@ -617,23 +664,26 @@ npm install sql-workbench-embedded
 
 #### Usage
 
+The following component uses the npm import. For CDN usage, omit the package import and use `window.SQLWorkbench` after the library script has loaded.
+
 ```jsx
 import { useRef, useEffect } from 'react';
+import { SQLWorkbench } from 'sql-workbench-embedded';
 
 function SQLWorkbenchEmbedded({ code, options }) {
   const containerRef = useRef(null);
   const embedRef = useRef(null);
 
   useEffect(() => {
-    if (containerRef.current && window.SQLWorkbench) {
+    if (containerRef.current) {
       // Create a pre element with the SQL code
       const preElement = document.createElement('pre');
       preElement.className = 'sql-workbench-embedded';
-      preElement.innerHTML = `<code>${code}</code>`;
+      preElement.textContent = code;
       containerRef.current.appendChild(preElement);
 
       // Initialize the embed
-      embedRef.current = new window.SQLWorkbench.Embedded(preElement, options);
+      embedRef.current = new SQLWorkbench.Embedded(preElement, options);
     }
 
     return () => {
@@ -659,11 +709,12 @@ function App() {
 
 ```vue
 <template>
-  <div ref="container"></div>
+  <div ref="containerRef"></div>
 </template>
 
 <script>
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, shallowRef, onMounted, onUnmounted } from 'vue';
+import { SQLWorkbench } from 'sql-workbench-embedded';
 
 export default {
   props: {
@@ -672,18 +723,18 @@ export default {
   },
   setup(props) {
     const containerRef = ref(null);
-    const embedRef = ref(null);
+    const embedRef = shallowRef(null);
 
     onMounted(() => {
-      if (containerRef.value && window.SQLWorkbench) {
+      if (containerRef.value) {
         // Create a pre element with the SQL code
         const preElement = document.createElement('pre');
         preElement.className = 'sql-workbench-embedded';
-        preElement.innerHTML = `<code>${props.code}</code>`;
+        preElement.textContent = props.code;
         containerRef.value.appendChild(preElement);
 
         // Initialize the embed
-        embedRef.value = new window.SQLWorkbench.Embedded(preElement, props.options);
+        embedRef.value = new SQLWorkbench.Embedded(preElement, props.options);
       }
     });
 
@@ -707,19 +758,21 @@ export default {
 </template>
 
 <script>
+import { SQLWorkbench } from 'sql-workbench-embedded';
+
 export default {
   props: ['code', 'options'],
   mounted() {
-    if (this.$refs.container && window.SQLWorkbench) {
+    if (this.$refs.container) {
       const element = document.createElement('pre');
       element.className = 'sql-workbench-embedded';
-      element.innerHTML = `<code>${this.code}</code>`;
+      element.textContent = this.code;
       this.$refs.container.appendChild(element);
 
-      this.embed = new window.SQLWorkbench.Embedded(element, this.options);
+      this.embed = new SQLWorkbench.Embedded(element, this.options);
     }
   },
-  beforeUnmount() {
+  beforeDestroy() {
     this.embed?.destroy();
   },
 };

@@ -24,29 +24,13 @@ const SQL_KEYWORDS = new Set([
 ]);
 
 /**
- * Escape HTML special characters and preserve spaces
+ * Escape HTML special characters without changing the SQL text.
+ * The editor's white-space: pre-wrap CSS preserves whitespace visually.
  */
 function escapeHtml(text: string): string {
   const div = document.createElement('div');
   div.textContent = text;
-  let html = div.innerHTML;
-
-  // Replace multiple spaces with non-breaking spaces to preserve formatting
-  html = html.replace(/ {2,}/g, (match) => {
-    return '&nbsp;'.repeat(match.length);
-  });
-
-  // Preserve trailing spaces
-  if (text.endsWith(' ')) {
-    html = html.replace(/ +$/, (match) => '&nbsp;'.repeat(match.length));
-  }
-
-  // Preserve leading spaces
-  if (text.startsWith(' ')) {
-    html = html.replace(/^ +/, (match) => '&nbsp;'.repeat(match.length));
-  }
-
-  return html;
+  return div.innerHTML;
 }
 
 /**

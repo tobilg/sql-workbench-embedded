@@ -16,6 +16,7 @@ describe('initQueries feature', () => {
   };
 
   const mockDuckDBModule = {
+    PACKAGE_VERSION: '1.31.1-dev1.0',
     ConsoleLogger: vi.fn(function(this: any) {
       this.log = vi.fn();
     }),
@@ -43,7 +44,9 @@ describe('initQueries feature', () => {
     (duckDBManager as any).db = null;
     (duckDBManager as any).connection = null;
     (duckDBManager as any).initPromise = null;
-    (duckDBManager as any).registeredFiles = new Set();
+    (duckDBManager as any).registeredFiles = new Map();
+    (duckDBManager as any).closePromise = null;
+    (duckDBManager as any).operations = new Set();
     (duckDBManager as any).duckdbModule = null;
 
     // Reset init queries state
@@ -91,7 +94,7 @@ describe('initQueries feature', () => {
       duckDBManager.configureInitQueries(['INSTALL spatial']);
 
       expect(consoleWarnSpy).toHaveBeenCalledWith(
-        'Init queries already executed, configuration will not take effect'
+        'Init queries already executed or initializing, configuration will not take effect'
       );
       consoleWarnSpy.mockRestore();
     });

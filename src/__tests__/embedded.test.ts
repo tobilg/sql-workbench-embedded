@@ -338,13 +338,25 @@ describe('Embedded', () => {
 
       await embed.run();
 
-      // Check that query was called with the SQL (normalize whitespace)
-      expect(duckDBManager.query).toHaveBeenCalled();
-      const callArg = vi.mocked(duckDBManager.query).mock.calls[0]?.[0];
-      expect(callArg).toBeDefined();
-      const normalizedArg = callArg!.replace(/\s+/g, ' ').trim();
-      expect(normalizedArg).toBe('SELECT 1');
+      expect(duckDBManager.query).toHaveBeenCalledWith('SELECT 1');
       vi.useFakeTimers(); // Restore fake timers
+    });
+
+    it('should execute the exact SQL text after editing and highlighting', async () => {
+      const embed = new Embedded(createSQLElement('SELECT 1'));
+      const editor = embed.getContainer()!.querySelector<HTMLElement>('.sql-workbench-editor')!;
+      const sql = "SELECT 'a  b', 'a\u00a0b', '<tag> & &nbsp;' AS value;\n";
+      editor.textContent = sql;
+      editor.dispatchEvent(new Event('input', { bubbles: true }));
+      await vi.advanceTimersByTimeAsync(150);
+
+      expect(editor.textContent).toBe(sql);
+
+      const run = embed.run();
+      await vi.runAllTimersAsync();
+      await run;
+
+      expect(duckDBManager.query).toHaveBeenCalledWith(sql);
     });
 
     it('should configure DuckDB before first query', async () => {
@@ -375,7 +387,7 @@ describe('Embedded', () => {
       await embed.run();
 
       expect(duckDBManager.registerFile).toHaveBeenCalledWith(
-        'data.parquet',
+        'https://data.example.com/data.parquet',
         'https://data.example.com/data.parquet'
       );
       vi.useFakeTimers();
@@ -730,7 +742,7 @@ describe('Embedded', () => {
       vi.useFakeTimers();
     });
 
-    it('should skip init queries configuration if none provided', async () => {
+    it('should configure an empty initialization list if none provided', async () => {
       vi.useRealTimers();
       const element = createSQLElement('SELECT 1');
       const embed = new Embedded(element);
@@ -740,12 +752,12 @@ describe('Embedded', () => {
       await embed.run();
 
       expect(duckDBManager.configure).toHaveBeenCalled();
-      expect(duckDBManager.configureInitQueries).not.toHaveBeenCalled();
+      expect(duckDBManager.configureInitQueries).toHaveBeenCalledWith([]);
 
       vi.useFakeTimers();
     });
 
-    it('should skip init queries configuration if empty array', async () => {
+    it('should respect an explicitly empty initialization list', async () => {
       vi.useRealTimers();
       const element = createSQLElement('SELECT 1');
       const embed = new Embedded(element, { initQueries: [] });
@@ -755,7 +767,7 @@ describe('Embedded', () => {
       await embed.run();
 
       expect(duckDBManager.configure).toHaveBeenCalled();
-      expect(duckDBManager.configureInitQueries).not.toHaveBeenCalled();
+      expect(duckDBManager.configureInitQueries).toHaveBeenCalledWith([]);
 
       vi.useFakeTimers();
     });

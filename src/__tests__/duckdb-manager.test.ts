@@ -16,6 +16,7 @@ describe('duckdb-manager', () => {
   };
 
   const mockDuckDBModule = {
+    PACKAGE_VERSION: '1.31.1-dev1.0',
     ConsoleLogger: vi.fn(function(this: any) {
       this.log = vi.fn();
     }),
@@ -43,7 +44,9 @@ describe('duckdb-manager', () => {
     (duckDBManager as any).db = null;
     (duckDBManager as any).connection = null;
     (duckDBManager as any).initPromise = null;
-    (duckDBManager as any).registeredFiles = new Set();
+    (duckDBManager as any).registeredFiles = new Map();
+    (duckDBManager as any).closePromise = null;
+    (duckDBManager as any).operations = new Set();
     (duckDBManager as any).duckdbModule = null;
     // Reset config to defaults
     (duckDBManager as any).config = {
@@ -102,6 +105,7 @@ describe('duckdb-manager', () => {
 
     it('should return true after initialization', () => {
       (duckDBManager as any).db = mockDb;
+      (duckDBManager as any).connection = mockConnection;
       expect(duckDBManager.isInitialized()).toBe(true);
     });
   });
@@ -140,18 +144,26 @@ describe('duckdb-manager', () => {
   });
 
   describe('registerFile', () => {
-    beforeEach(() => {
+    let httpProtocol: number;
+
+    beforeEach(async () => {
+      // Load the real protocol enum after the browser API mocks are installed.
+      const duckdb = await vi.importActual<typeof import('@duckdb/duckdb-wasm')>(
+        '@duckdb/duckdb-wasm/dist/duckdb-browser.mjs'
+      );
+      httpProtocol = duckdb.DuckDBDataProtocol.HTTP;
       (duckDBManager as any).db = mockDb;
       (duckDBManager as any).connection = mockConnection;
+      (duckDBManager as any).duckdbModule = duckdb;
     });
 
-    it('should register a file URL', async () => {
+    it('should register a file URL using the DuckDB HTTP protocol', async () => {
       await duckDBManager.registerFile('data.parquet', 'https://example.com/data.parquet');
 
       expect(mockDb.registerFileURL).toHaveBeenCalledWith(
         'data.parquet',
         'https://example.com/data.parquet',
-        0,
+        httpProtocol,
         false
       );
     });
@@ -227,14 +239,6 @@ describe('duckdb-manager', () => {
       expect(typeof result.executionTime).toBe('number');
     });
 
-    it('should throw error if connection not available', async () => {
-      (duckDBManager as any).connection = null;
-
-      await expect(duckDBManager.query('SELECT 1')).rejects.toThrow(
-        'DuckDB connection not available'
-      );
-    });
-
     it('should handle query execution errors', async () => {
       mockConnection.query.mockRejectedValueOnce(new Error('Syntax error'));
 
@@ -281,7 +285,7 @@ describe('duckdb-manager', () => {
     beforeEach(() => {
       (duckDBManager as any).db = mockDb;
       (duckDBManager as any).connection = mockConnection;
-      (duckDBManager as any).registeredFiles.add('https://example.com/data.parquet');
+      (duckDBManager as any).registeredFiles.set('data.parquet', { url: 'https://example.com/data.parquet', promise: Promise.resolve() });
     });
 
     it('should close connection and terminate database', async () => {
@@ -324,6 +328,7 @@ describe('duckdb-manager', () => {
   describe('initialization', () => {
     it('should return immediately if already initialized', async () => {
       (duckDBManager as any).db = mockDb;
+      (duckDBManager as any).connection = mockConnection;
 
       await (duckDBManager as any).initialize();
 

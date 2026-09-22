@@ -193,8 +193,7 @@ describe('index (main entry point)', () => {
       expect(editor?.contentEditable).toBe('false');
     });
 
-    it('should not pass theme from global config', () => {
-      // Theme should come from data-theme attribute, not global config
+    it('should prioritize data-theme over the global theme', () => {
       SQLWorkbench.config({ theme: 'dark' });
 
       const element = createSQLElement('SELECT 1');
@@ -228,19 +227,18 @@ describe('index (main entry point)', () => {
     it('should handle missing document gracefully', () => {
       const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
-      // Temporarily remove document
-      const originalDocument = global.document;
-      (global as any).document = undefined;
+      // Stub the global without assigning through the DOM's read-only getter.
+      vi.stubGlobal('document', undefined);
+      try {
+        SQLWorkbench.init();
 
-      SQLWorkbench.init();
-
-      expect(consoleWarnSpy).toHaveBeenCalledWith(
-        'SQLWorkbench: document is not available, skipping initialization'
-      );
-
-      // Restore document
-      (global as any).document = originalDocument;
-      consoleWarnSpy.mockRestore();
+        expect(consoleWarnSpy).toHaveBeenCalledWith(
+          'SQLWorkbench: document is not available, skipping initialization'
+        );
+      } finally {
+        vi.unstubAllGlobals();
+        consoleWarnSpy.mockRestore();
+      }
     });
   });
 
@@ -266,21 +264,9 @@ describe('index (main entry point)', () => {
       expect(duckDBManager.close).toHaveBeenCalled();
     });
 
-    it('should handle DuckDB close errors', async () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    it('should expose DuckDB close errors to the caller', async () => {
       vi.mocked(duckDBManager.close).mockRejectedValueOnce(new Error('Close failed'));
-
-      SQLWorkbench.destroy();
-
-      // Wait for promise to resolve
-      await new Promise(resolve => setTimeout(resolve, 0));
-
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        'Failed to close DuckDB connection:',
-        expect.any(Error)
-      );
-
-      consoleErrorSpy.mockRestore();
+      await expect(SQLWorkbench.destroy()).rejects.toThrow('Close failed');
     });
 
     it('should clear internal embed tracking', () => {
@@ -402,6 +388,102 @@ describe('index (main entry point)', () => {
   });
 
   describe('Embed class direct usage', () => {
+    beforeEach(() => {
+      SQLWorkbench.config({ autoInit: false });
+    });
+
+    it('should inherit global appearance and editing settings', () => {
+      SQLWorkbench.config({ theme: 'dark', editable: false, showOpenButton: false });
+
+      const embed = new SQLWorkbench.Embedded(createSQLElement('SELECT 1'));
+      const container = embed.getContainer()!;
+
+      expect(container.getAttribute('data-theme')).toBe('dark');
+      expect(container.querySelector<HTMLElement>('.sql-workbench-editor')?.contentEditable).toBe('false');
+      expect(container.querySelector('.sql-workbench-button-open')).toBeNull();
+    });
+
+    it('should inherit a globally selected custom theme', () => {
+      SQLWorkbench.config({
+        theme: 'ocean',
+        customThemes: { ocean: { extends: 'dark', config: { primaryBg: '#0ea5e9' } } },
+      });
+
+      const embed = new SQLWorkbench.Embedded(createSQLElement('SELECT 1'));
+      const container = embed.getContainer()!;
+
+      expect(container.getAttribute('data-theme')).toBe('ocean');
+      expect(container.style.getPropertyValue('--sw-primary-bg')).toBe('#0ea5e9');
+    });
+
+    it('should let instance options override globals without changing global config', () => {
+      SQLWorkbench.config({ theme: 'dark', editable: false, showOpenButton: false });
+      const configBefore = SQLWorkbench.getConfig();
+
+      const embed = new SQLWorkbench.Embedded(createSQLElement('SELECT 1'), {
+        theme: 'light',
+        editable: true,
+        showOpenButton: true,
+      });
+      const container = embed.getContainer()!;
+
+      expect(container.getAttribute('data-theme')).toBe('light');
+      expect(container.querySelector<HTMLElement>('.sql-workbench-editor')?.contentEditable).toBe('true');
+      expect(container.querySelector('.sql-workbench-button-open')).not.toBeNull();
+      expect(SQLWorkbench.getConfig()).toEqual(configBefore);
+    });
+
+    it('should prioritize data-theme over instance and global themes', () => {
+      SQLWorkbench.config({
+        theme: 'dark',
+        customThemes: { ocean: { extends: 'dark', config: {} } },
+      });
+      const element = createSQLElement('SELECT 1');
+      element.setAttribute('data-theme', 'ocean');
+
+      const embed = new SQLWorkbench.Embedded(element, { theme: 'light' });
+
+      expect(embed.getContainer()?.getAttribute('data-theme')).toBe('ocean');
+    });
+
+    it.each([false, true])('should use inherited query settings with instance overrides: %s', async (override) => {
+      const globalSettings = {
+        baseUrl: 'https://global.example/data',
+        duckdbVersion: '1.30.0',
+        duckdbCDN: 'https://global.example/duckdb',
+        initQueries: ['INSTALL spatial', 'LOAD spatial'],
+      };
+      const instanceSettings = {
+        baseUrl: 'https://instance.example/data',
+        duckdbVersion: '1.31.1-dev1.0',
+        duckdbCDN: 'https://instance.example/duckdb',
+        initQueries: [],
+      };
+      SQLWorkbench.config(globalSettings);
+      vi.mocked(duckDBManager.isInitialized).mockReturnValue(false);
+      vi.mocked(duckDBManager.registerFile).mockResolvedValue(undefined);
+      vi.mocked(duckDBManager.query).mockResolvedValue({
+        columns: [], rows: [], rowCount: 0, executionTime: 1,
+      });
+      const sql = "SELECT * FROM 'data.parquet'";
+      const embed = new SQLWorkbench.Embedded(createSQLElement(sql), override ? instanceSettings : {});
+      const expected = override ? instanceSettings : globalSettings;
+
+      await embed.run();
+
+      expect(duckDBManager.configure).toHaveBeenCalledWith({
+        version: expected.duckdbVersion,
+        cdn: expected.duckdbCDN,
+      });
+      expect(duckDBManager.registerFile).toHaveBeenCalledWith(`${expected.baseUrl}/data.parquet`, `${expected.baseUrl}/data.parquet`);
+      if (override) {
+        expect(duckDBManager.configureInitQueries).toHaveBeenCalledWith([]);
+      } else {
+        expect(duckDBManager.configureInitQueries).toHaveBeenCalledWith(globalSettings.initQueries);
+      }
+      expect(duckDBManager.query).toHaveBeenCalledWith(`SELECT * FROM '${expected.baseUrl}/data.parquet'`);
+    });
+
     it('should allow creating embeds directly', () => {
       const element = createSQLElement('SELECT 1');
       const embed = new SQLWorkbench.Embedded(element);

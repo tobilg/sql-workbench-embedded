@@ -1,0 +1,89 @@
+name: Release npm package
+
+on:
+  push:
+    tags:
+      - 'v*'
+  # Manual runs verify and upload a candidate without publishing it.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sql-workbench-embedded-release
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    outputs:
+      tarball: ${{ steps.candidate.outputs.tarball }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+      - name: Validate release version
+        env:
+          RELEASE_TAG: ${{ github.event_name == 'push' && github.ref_name || '' }}
+        run: node scripts/release.mjs validate "$RELEASE_TAG"
+      - run: npm ci
+      - run: npm run type-check
+      - run: npm test
+      - run: npm run build:prod
+      - name: Pack the production build
+        run: |
+          mkdir -p build/package
+          npm pack --ignore-scripts --json --pack-destination build/package > build/package/pack.json
+      - name: Record candidate identity and integrity
+        id: candidate
+        run: node scripts/release.mjs candidate
+      - name: Verify packaged consumer types
+        env:
+          RELEASE_TARBALL: build/package/${{ steps.candidate.outputs.tarball }}
+        run: node scripts/check-package.mjs "$RELEASE_TARBALL"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: npm-release
+          path: |
+            build/package/*.tgz
+            build/package/release.json
+          if-no-files-found: error
+          retention-days: 14
+
+  publish:
+    needs: verify
+    if: github.event_name == 'push'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+      - uses: actions/download-artifact@v7
+        with:
+          name: npm-release
+          path: build/package
+      - name: Verify artifact and check for an identical published version
+        id: registry
+        run: node scripts/release.mjs published
+      - name: Check GitHub OIDC and package repository
+        if: steps.registry.outputs.published != 'true'
+        run: node scripts/release.mjs publish-environment
+      - name: Install npm with trusted publishing support
+        if: steps.registry.outputs.published != 'true'
+        run: npm install --global npm@12.0.2 --no-audit --no-fund
+      - name: Publish the verified tarball with npm OIDC
+        if: steps.registry.outputs.published != 'true'
+        env:
+          RELEASE_TARBALL: build/package/${{ needs.verify.outputs.tarball }}
+        # Verbose logging exposes OIDC failures otherwise reported as ENEEDAUTH.
+        run: npm publish "$RELEASE_TARBALL" --access public --provenance --tag latest --loglevel verbose

@@ -140,7 +140,7 @@
   <div id="app"></div>
 
   <script>
-    const { createApp, ref, onMounted, onUnmounted } = Vue;
+    const { createApp, ref, shallowRef, onMounted, onUnmounted } = Vue;
     
     // SQL Workbench Embed component
     const SQLWorkbenchEmbed = {
@@ -155,14 +155,14 @@
       },
       setup(props) {
         const containerRef = ref(null);
-        const embedRef = ref(null);
+        const embedRef = shallowRef(null);
         
         onMounted(() => {
           if (containerRef.value && window.SQLWorkbench) {
             // Create a pre element with the SQL code
             const preElement = document.createElement('pre');
             preElement.className = 'sql-workbench-embedded';
-            preElement.innerHTML = `<code>${props.code}</code>`;
+            preElement.textContent = props.code;
             containerRef.value.appendChild(preElement);
             
             // Initialize the embedded

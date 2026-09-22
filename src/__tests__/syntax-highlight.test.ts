@@ -69,10 +69,22 @@ describe('syntax-highlight', () => {
       expect(highlighted).toContain('<span class="sql-operator">&lt;</span>');
     });
 
-    it('should preserve whitespace', () => {
-      const sql = 'SELECT  *  FROM  users';
-      const highlighted = highlightSQL(sql);
-      expect(highlighted).toContain('&nbsp;&nbsp;'); // Double spaces
+    it.each([
+      'SELECT  *  FROM  users',
+      '\tSELECT 1,\n\t  2;\n',
+      "SELECT 'a  b' AS value",
+      'SELECT "a  b" FROM users',
+      "SELECT 'a\u00a0b', '<tag> & &nbsp;'",
+      '-- a  comment\nSELECT 1 /* another  comment */',
+    ])('should preserve SQL text after highlighting: %j', (sql) => {
+      const editor = document.createElement('div');
+      editor.innerHTML = highlightSQL(sql);
+
+      expect(editor.textContent).toBe(sql);
+
+      // Repeated highlighting must also leave the original text intact.
+      editor.innerHTML = highlightSQL(editor.textContent!);
+      expect(editor.textContent).toBe(sql);
     });
 
     it('should escape HTML special characters', () => {
@@ -212,13 +224,13 @@ describe('syntax-highlight', () => {
     it('should preserve leading spaces', () => {
       const sql = '  SELECT * FROM users';
       const highlighted = highlightSQL(sql);
-      expect(highlighted.startsWith('&nbsp;&nbsp;')).toBe(true);
+      expect(highlighted.startsWith('  ')).toBe(true);
     });
 
     it('should preserve trailing spaces', () => {
       const sql = 'SELECT * FROM users  ';
       const highlighted = highlightSQL(sql);
-      expect(highlighted.endsWith('&nbsp;&nbsp;')).toBe(true);
+      expect(highlighted.endsWith('  ')).toBe(true);
     });
   });
 

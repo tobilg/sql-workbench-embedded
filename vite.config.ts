@@ -1,5 +1,4 @@
 import { defineConfig, type Plugin } from 'vite';
-import dts from 'vite-plugin-dts';
 import { resolve } from 'path';
 import pkg from './package.json';
 import { minify as terserMinify } from 'terser';
@@ -39,14 +38,7 @@ const minifyESM = (): Plugin => ({
 });
 
 export default defineConfig({
-  plugins: [
-    dts({
-      insertTypesEntry: true,
-      rollupTypes: true, // Bundle all .d.ts files into a single file
-      exclude: ['**/*.test.ts', '**/*.spec.ts', '**/__tests__/**', 'examples/**', 'node_modules/**'],
-    }),
-    minifyESM(),
-  ],
+  plugins: [minifyESM()],
   build: {
     lib: {
       entry: resolve(__dirname, 'src/index.ts'),

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { resolvePath, extractFilePaths, resolvePathsInSQL } from '../path-resolver';
+import { resolvePath, extractFilePaths, resolvePathsInSQL, rewriteFilePaths } from '../path-resolver';
 import type { PathResolutionOptions } from '../path-resolver';
 
 describe('path-resolver', () => {
@@ -69,6 +69,52 @@ describe('path-resolver', () => {
       expect(resolvePath(path, options)).toBe(
         'http://localhost:3000/datasets/sales/data.parquet'
       );
+    });
+  });
+
+  describe('rewriteFilePaths', () => {
+    it('rewrites table references while preserving matching values, comments, and reader options', () => {
+      const sql = `SELECT 'data.csv', $$FROM 'ignore.csv'$$
+        -- FROM 'comment.csv'
+        FROM /* JOIN 'comment2.csv' */ read_csv('data.csv', nullstr = 'data.csv')
+        WHERE name = 'data.csv'`;
+      const paths = resolvePathsInSQL(sql, options);
+      expect([...paths.keys()]).toEqual(['data.csv']);
+      expect(rewriteFilePaths(sql, paths)).toBe(sql.replace("read_csv('data.csv'", "read_csv('https://data.sql-workbench.com/data.csv'"));
+    });
+
+    it('resolves nested queries, comma joins, reader lists, and signed URLs', () => {
+      const sql = `WITH c AS (SELECT * FROM './one.csv')
+        SELECT * FROM c, read_parquet(['nested/two.parquet', 'three.parquet?token=abc'])
+        JOIN 'four.json' USING (id)`;
+      const paths = resolvePathsInSQL(sql, options);
+      expect([...paths.keys()]).toEqual(['./one.csv', 'nested/two.parquet', 'three.parquet?token=abc', 'four.json']);
+      const rewritten = rewriteFilePaths(sql, paths);
+      expect(rewritten).toContain("FROM 'https://data.sql-workbench.com/one.csv'");
+      expect(rewritten).toContain("['https://data.sql-workbench.com/nested/two.parquet', 'https://data.sql-workbench.com/three.parquet?token=abc']");
+      expect(rewritten).toContain("JOIN 'https://data.sql-workbench.com/four.json'");
+    });
+
+    it('preserves quoted filenames and escapes apostrophes in resolved URLs', () => {
+      const sql = `SELECT * FROM 'O''Brien.csv' JOIN "two.csv" USING (id)`;
+      const paths = resolvePathsInSQL(sql, options);
+      expect(rewriteFilePaths(sql, paths)).toBe(`SELECT * FROM 'https://data.sql-workbench.com/O''Brien.csv' JOIN "https://data.sql-workbench.com/two.csv" USING (id)`);
+    });
+
+    it('does not treat FROM inside scalar functions as a table reference', () => {
+      const sql = `SELECT trim('x' FROM 'data.csv'), (SELECT count(*) FROM 'other.csv')`;
+      expect(extractFilePaths(sql)).toEqual(['other.csv']);
+      expect(rewriteFilePaths(sql, resolvePathsInSQL(sql, options))).toBe(`SELECT trim('x' FROM 'data.csv'), (SELECT count(*) FROM 'https://data.sql-workbench.com/other.csv')`);
+    });
+
+    it('leaves computed reader arguments untouched', () => {
+      const sql = `SELECT * FROM read_csv('prefix/' || 'data.csv'), read_csv('other.csv' || suffix)`;
+      expect(extractFilePaths(sql)).toEqual([]);
+      expect(rewriteFilePaths(sql, new Map([['data.csv', 'https://example.com/data.csv']]))).toBe(sql);
+    });
+
+    it('normalizes dot segments and encodes spaces using URL semantics', () => {
+      expect(resolvePath('../nested/my data.csv', { baseUrl: 'https://example.com/a/b' })).toBe('https://example.com/a/nested/my%20data.csv');
     });
   });
 

@@ -1,4 +1,7 @@
 import { vi, beforeEach, afterEach } from 'vitest';
+import { destroyEmbeds } from '../instance-registry';
+import { setGlobalConfig } from '../config-store';
+import { DEFAULT_CONFIG } from '../types';
 
 // Mock DuckDB WASM module
 vi.mock('@duckdb/duckdb-wasm', () => ({
@@ -16,6 +19,8 @@ vi.mock('@duckdb/duckdb-wasm', () => ({
 
 // Setup DOM environment
 beforeEach(() => {
+  destroyEmbeds();
+  setGlobalConfig(DEFAULT_CONFIG);
   // Clear document body
   document.body.innerHTML = '';
   document.head.innerHTML = '';
@@ -88,6 +93,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  destroyEmbeds();
   vi.clearAllTimers();
   vi.clearAllMocks();
 });

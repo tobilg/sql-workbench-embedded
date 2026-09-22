@@ -1,6 +1,6 @@
 {
   "name": "sql-workbench-embedded",
-  "version": "0.1.5",
+  "version": "0.2.0",
   "description": "Lightweight JavaScript library that transforms static SQL code blocks into interactive, browser-based SQL execution environments using DuckDB WASM",
   "main": "dist/sql-workbench-embedded.js",
   "browser": "dist/sql-workbench-embedded.js",
@@ -18,13 +18,14 @@
   },
   "files": [
     "dist/*.js",
-    "dist/index.d.ts",
+    "dist/*.d.ts",
     "README.md",
     "LICENSE"
   ],
   "scripts": {
     "dev": "vite",
-    "build": "rm -rf dist/ && tsc && vite build && npm run copy:example",
+    "build": "vite build && npm run build:types && npm run copy:example",
+    "build:types": "tsc --emitDeclarationOnly --declarationMap false",
     "build:prod": "NODE_ENV=production npm run build",
     "copy:example": "cp examples/index.html dist/ && sed -i.bak 's|../src/index.ts|../sql-workbench-embedded.esm.js|' dist/index.html && rm -f dist/index.html.bak",
     "preview": "vite preview",
@@ -63,20 +64,19 @@
   },
   "homepage": "https://github.com/tobilg/sql-workbench-embedded#readme",
   "devDependencies": {
-    "@duckdb/duckdb-wasm": "^1.33.1-dev19.0",
+    "@duckdb/duckdb-wasm": "^1.33.1-dev57.0",
     "@types/node": "^22.18.12",
-    "@vitest/coverage-v8": "^4.0.18",
-    "@vitest/ui": "^4.0.18",
-    "happy-dom": "^20.3.9",
-    "jsdom": "^27.4.0",
-    "terser": "^5.46.0",
-    "typescript": "^5.9.3",
-    "vite": "^7.3.1",
-    "vite-plugin-dts": "^4.5.4",
-    "vitest": "^4.0.18"
+    "@vitest/coverage-v8": "^5.0.1",
+    "@vitest/ui": "^5.0.1",
+    "happy-dom": "^20.14.5",
+    "jsdom": "^30.1.1",
+    "terser": "^5.51.2",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.0",
+    "vitest": "^5.0.1"
   },
   "peerDependencies": {
-    "@duckdb/duckdb-wasm": "^1.33.1-dev19.0"
+    "@duckdb/duckdb-wasm": "^1.33.1-dev57.0"
   },
   "peerDependenciesMeta": {
     "@duckdb/duckdb-wasm": {
