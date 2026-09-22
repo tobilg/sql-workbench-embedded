@@ -101,7 +101,7 @@ Before the first automated publication, configure the `sql-workbench-embedded` p
 | Environment | Leave empty |
 | Allowed actions | Enable direct `npm publish` |
 
-The workflow uses Node from `.nvmrc` and npm 12.0.2 for publishing. Authentication uses GitHub's OIDC grant (`id-token: write` on the publish job); an `NPM_TOKEN` secret is not needed. See [npm's trusted publishing documentation](https://docs.npmjs.com/trusted-publishers/).
+The workflow uses Node from `.nvmrc` and invokes npm 12.0.2 through `npm exec` for publishing. This runs the pinned CLI from an isolated cache installation and avoids replacing the running global npm. Authentication uses GitHub's OIDC grant (`id-token: write` on the publish job); an `NPM_TOKEN` secret is not needed. See [npm's trusted publishing documentation](https://docs.npmjs.com/trusted-publishers/).
 
 After committing your changes, create the next release with:
 

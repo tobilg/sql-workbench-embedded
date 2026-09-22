@@ -78,12 +78,11 @@ jobs:
       - name: Check GitHub OIDC and package repository
         if: steps.registry.outputs.published != 'true'
         run: node scripts/release.mjs publish-environment
-      - name: Install npm with trusted publishing support
-        if: steps.registry.outputs.published != 'true'
-        run: npm install --global npm@12.0.2 --no-audit --no-fund
       - name: Publish the verified tarball with npm OIDC
         if: steps.registry.outputs.published != 'true'
         env:
           RELEASE_TARBALL: build/package/${{ needs.verify.outputs.tarball }}
+        # Run the pinned CLI from npm's cache; a global self-upgrade can remove
+        # dependencies that the running installer still needs.
         # Verbose logging exposes OIDC failures otherwise reported as ENEEDAUTH.
-        run: npm publish "$RELEASE_TARBALL" --access public --provenance --tag latest --loglevel verbose
+        run: npm exec --yes --package=npm@12.0.2 -- npm publish "$RELEASE_TARBALL" --access public --provenance --tag latest --loglevel verbose
